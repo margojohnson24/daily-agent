@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Tasks</title>
@@ -1191,6 +1192,10 @@
     </style>
 </head>
 <body>
+    <button id="googleSignInBtn">
+        Sign in with Google
+      </button>
+      
     <div class="container" id="appContainer">
         <header>
             <div class="header-row">
@@ -2850,6 +2855,32 @@
 
             return { type: 'text', content: 'Couldn\'t find an unchecked milestone matching "' + escapeHtml(milestoneText) + '".' };
         }
-    </script>
+        const GOOGLE_CLIENT_ID =
+          "1053494791247-io3dlogsgc6fqn7j32nncp5mvmo0jqr8.apps.googleusercontent.com";
+      
+        let tokenClient;
+        let accessToken = null;
+      
+        function initGoogleAuth() {
+          tokenClient = google.accounts.oauth2.initTokenClient({
+            client_id: GOOGLE_CLIENT_ID,
+            scope: "https://www.googleapis.com/auth/calendar.events.readonly",
+            callback: (response) => {
+              accessToken = response.access_token;
+              localStorage.setItem("googleAccessToken", accessToken);
+              console.log("Google access token stored");
+            },
+          });
+        }
+      
+        document.getElementById("googleSignInBtn").addEventListener("click", () => {
+          tokenClient.requestAccessToken();
+        });
+      
+        window.addEventListener("load", () => {
+          initGoogleAuth();
+        });
+      </script>
+      
 </body>
 </html>
