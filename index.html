@@ -1,0 +1,2855 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tasks</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-primary: #fafafa;
+            --bg-secondary: #ffffff;
+            --bg-tertiary: #f0f0f0;
+            --text-primary: #1a1a1a;
+            --text-secondary: #666666;
+            --text-muted: #999999;
+            --border: #e5e5e5;
+            --accent: #6366f1;
+            --accent-hover: #4f46e5;
+            --success: #22c55e;
+            --work: #3b82f6;
+            --personal: #10b981;
+            --curiosity: #f59e0b;
+            --people: #ec4899;
+            --waiting: #fbbf24;
+            --shadow: 0 1px 3px rgba(0,0,0,0.08);
+            --shadow-lg: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --bg-primary: #0a0a0a;
+                --bg-secondary: #141414;
+                --bg-tertiary: #1f1f1f;
+                --text-primary: #f5f5f5;
+                --text-secondary: #a3a3a3;
+                --text-muted: #666666;
+                --border: #2a2a2a;
+                --shadow: 0 1px 3px rgba(0,0,0,0.3);
+                --shadow-lg: 0 4px 12px rgba(0,0,0,0.4);
+            }
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            line-height: 1.5;
+        }
+
+        .container {
+            max-width: 640px;
+            margin: 0 auto;
+            padding: 2rem 1rem;
+            transition: max-width 0.3s ease;
+        }
+
+        .container.wide {
+            max-width: 900px;
+        }
+
+        header {
+            margin-bottom: 2rem;
+        }
+
+        header .header-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        h1 {
+            font-size: 1.75rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .subtitle {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        .settings-btn {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            padding: 0.5rem;
+            font-size: 1rem;
+            transition: color 0.2s;
+        }
+
+        .settings-btn:hover {
+            color: var(--text-primary);
+        }
+
+        /* View Toggle */
+        .view-toggle {
+            display: flex;
+            gap: 0.25rem;
+            background: var(--bg-tertiary);
+            padding: 0.25rem;
+            border-radius: 0.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .view-btn {
+            flex: 1;
+            padding: 0.5rem 0.75rem;
+            border: none;
+            background: transparent;
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+            font-weight: 500;
+            border-radius: 0.375rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .view-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: left 0.4s ease;
+        }
+
+        .view-btn:hover::before {
+            left: 100%;
+        }
+
+        .view-btn.active {
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            box-shadow: var(--shadow);
+        }
+
+        .view-btn:hover:not(.active) {
+            color: var(--text-primary);
+        }
+
+        /* ========== HOME VIEW ========== */
+        .home-view {
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        .home-greeting {
+            text-align: center;
+            padding: 2rem 0 1.5rem;
+        }
+
+        .home-greeting h2 {
+            font-size: 1.5rem;
+            font-weight: 300;
+            color: var(--text-primary);
+            margin-bottom: 0.25rem;
+        }
+
+        .home-greeting h2 strong {
+            font-weight: 600;
+        }
+
+        .home-summary {
+            max-width: 480px;
+            margin: 0 auto 2rem;
+            padding: 1.25rem;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 0.75rem;
+            min-height: 100px;
+        }
+
+        .home-summary-line {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            padding: 0.25rem 0;
+            line-height: 1.6;
+            opacity: 0;
+            transform: translateY(4px);
+        }
+
+        .home-summary-line.visible {
+            opacity: 1;
+            transform: translateY(0);
+            transition: opacity 0.3s ease, transform 0.3s ease;
+        }
+
+        .home-summary-line.instant {
+            opacity: 1;
+            transform: translateY(0);
+            transition: none;
+        }
+
+        .typing-cursor {
+            display: inline-block;
+            width: 2px;
+            height: 1em;
+            background: var(--accent);
+            margin-left: 2px;
+            animation: blink 0.8s step-end infinite;
+            vertical-align: text-bottom;
+        }
+
+        @keyframes blink {
+            50% { opacity: 0; }
+        }
+
+        .home-quick-actions {
+            display: flex;
+            gap: 0.5rem;
+            justify-content: center;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+        }
+
+        .quick-action-btn {
+            padding: 0.5rem 1rem;
+            border: 1px solid var(--border);
+            background: var(--bg-secondary);
+            color: var(--text-secondary);
+            border-radius: 2rem;
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .quick-action-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: left 0.4s ease;
+        }
+
+        .quick-action-btn:hover::before {
+            left: 100%;
+        }
+
+        .quick-action-btn:hover {
+            border-color: var(--accent);
+            color: var(--accent);
+            background: rgba(99, 102, 241, 0.05);
+        }
+
+        /* Chat */
+        .chat-container {
+            max-width: 480px;
+            margin: 0 auto;
+        }
+
+        .chat-input-area {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .chat-input {
+            flex: 1;
+            padding: 0.875rem 1.25rem;
+            border: 1px solid var(--border);
+            border-radius: 1.5rem;
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            font-size: 0.95rem;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        .chat-input:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+        }
+
+        .chat-input::placeholder {
+            color: var(--text-muted);
+        }
+
+        .chat-send-btn {
+            width: 44px;
+            height: 44px;
+            border: none;
+            background: var(--accent);
+            color: white;
+            border-radius: 50%;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: background 0.2s, transform 0.1s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .chat-send-btn:hover {
+            background: var(--accent-hover);
+            box-shadow: 0 0 15px rgba(99, 102, 241, 0.4);
+        }
+
+        .chat-send-btn:active {
+            transform: scale(0.95);
+        }
+
+        .chat-messages {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .chat-message {
+            padding: 1rem;
+            border-radius: 1rem;
+            font-size: 0.9rem;
+            line-height: 1.6;
+            animation: slideUp 0.2s ease-out;
+        }
+
+        .chat-message.agent {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-top-left-radius: 0.25rem;
+            color: var(--text-primary);
+        }
+
+        .chat-message.user {
+            background: var(--accent);
+            color: white;
+            border-top-right-radius: 0.25rem;
+            align-self: flex-end;
+            max-width: 85%;
+        }
+
+        .chat-message.thinking {
+            color: var(--text-muted);
+        }
+
+        .thinking-dots span {
+            animation: dotPulse 1.2s infinite;
+            display: inline-block;
+        }
+
+        .thinking-dots span:nth-child(2) { animation-delay: 0.2s; }
+        .thinking-dots span:nth-child(3) { animation-delay: 0.4s; }
+
+        @keyframes dotPulse {
+            0%, 60%, 100% { opacity: 0.3; }
+            30% { opacity: 1; }
+        }
+
+        /* Task preview card in chat */
+        .task-preview {
+            margin-top: 0.75rem;
+            padding: 1rem;
+            background: var(--bg-tertiary);
+            border-radius: 0.5rem;
+            border: 1px solid var(--border);
+        }
+
+        .task-preview-row {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 0.5rem;
+            font-size: 0.85rem;
+        }
+
+        .task-preview-row:last-child {
+            margin-bottom: 0;
+        }
+
+        .task-preview-label {
+            color: var(--text-muted);
+            min-width: 70px;
+        }
+
+        .task-preview-value {
+            color: var(--text-primary);
+            font-weight: 500;
+        }
+
+        .task-preview-actions {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 0.75rem;
+        }
+
+        .preview-btn {
+            padding: 0.5rem 1rem;
+            border-radius: 0.375rem;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .preview-btn.confirm {
+            background: var(--accent);
+            color: white;
+            border: none;
+        }
+
+        .preview-btn.confirm::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+            transition: left 0.5s ease;
+        }
+
+        .preview-btn.confirm:hover::before {
+            left: 100%;
+        }
+
+        .preview-btn.confirm:hover {
+            background: var(--accent-hover);
+        }
+
+        .preview-btn.edit {
+            background: transparent;
+            color: var(--text-secondary);
+            border: 1px solid var(--border);
+        }
+
+        .preview-btn.edit:hover {
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+        }
+
+        .preview-edit-fields {
+            display: none;
+            margin-top: 0.75rem;
+            padding-top: 0.75rem;
+            border-top: 1px solid var(--border);
+        }
+
+        .preview-edit-fields.visible {
+            display: block;
+        }
+
+        .preview-edit-field {
+            margin-bottom: 0.5rem;
+        }
+
+        .preview-edit-field label {
+            display: block;
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            margin-bottom: 0.25rem;
+        }
+
+        .preview-edit-field input,
+        .preview-edit-field textarea,
+        .preview-edit-field select {
+            width: 100%;
+            padding: 0.5rem 0.625rem;
+            border: 1px solid var(--border);
+            border-radius: 0.375rem;
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            font-size: 0.8rem;
+            font-family: inherit;
+        }
+
+        .preview-edit-field textarea {
+            resize: vertical;
+            min-height: 3rem;
+        }
+
+        .preview-edit-field input:focus,
+        .preview-edit-field textarea:focus,
+        .preview-edit-field select:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+
+        /* ========== TASKS VIEW (categorized) ========== */
+        .tasks-view {
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        .add-task-form {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .add-task-input {
+            flex: 1;
+            padding: 0.75rem 1rem;
+            border: 1px solid var(--border);
+            border-radius: 0.5rem;
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            font-size: 0.95rem;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        .add-task-input:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+        }
+
+        .add-task-input::placeholder {
+            color: var(--text-muted);
+        }
+
+        .add-task-btn {
+            padding: 0.75rem 1.25rem;
+            background: var(--accent);
+            color: white;
+            border: none;
+            border-radius: 0.5rem;
+            font-size: 0.95rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background 0.2s, transform 0.1s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .add-task-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+            transition: left 0.5s ease;
+        }
+
+        .add-task-btn:hover::before {
+            left: 100%;
+        }
+
+        .add-task-btn:hover {
+            background: var(--accent-hover);
+            box-shadow: 0 0 20px rgba(99, 102, 241, 0.4);
+        }
+
+        .add-task-btn:active {
+            transform: scale(0.98);
+        }
+
+        .category-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .category-group-header {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 0;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .category-group-header:hover {
+            opacity: 0.8;
+        }
+
+        .category-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+
+        .category-dot.inbox { background: var(--text-muted); }
+        .category-dot.work { background: var(--work); }
+        .category-dot.personal { background: var(--personal); }
+        .category-dot.curiosity { background: var(--curiosity); }
+        .category-dot.people { background: var(--people); }
+
+        .category-group-title {
+            font-weight: 600;
+            font-size: 0.95rem;
+        }
+
+        .category-group-count {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            background: var(--bg-tertiary);
+            padding: 0.125rem 0.5rem;
+            border-radius: 1rem;
+        }
+
+        .category-group-toggle {
+            margin-left: auto;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            transition: transform 0.2s;
+        }
+
+        .category-group.collapsed .category-group-toggle {
+            transform: rotate(-90deg);
+        }
+
+        .category-group-body {
+            padding-left: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease, opacity 0.3s ease;
+        }
+
+        .category-group.collapsed .category-group-body {
+            max-height: 0 !important;
+            opacity: 0;
+        }
+
+        .subtag-group {
+            margin-left: 1.25rem;
+            margin-top: 0.25rem;
+        }
+
+        .subtag-group-title {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            padding: 0.25rem 0;
+            font-weight: 500;
+        }
+
+        /* Task List Items */
+        .task-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.375rem;
+        }
+
+        .task-item {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 0.75rem;
+            overflow: hidden;
+            transition: box-shadow 0.2s, border-color 0.2s;
+        }
+
+        .task-item:hover {
+            box-shadow: var(--shadow);
+        }
+
+        .task-item.waiting-indicator {
+            border-color: var(--waiting);
+            box-shadow: 0 0 8px rgba(251, 191, 36, 0.2);
+        }
+
+        .task-main {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.75rem 1rem;
+            cursor: pointer;
+        }
+
+        .task-checkbox {
+            width: 1.25rem;
+            height: 1.25rem;
+            border: 2px solid var(--border);
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .task-checkbox:hover {
+            border-color: var(--success);
+            background: rgba(34, 197, 94, 0.1);
+        }
+
+        .task-checkbox.checked {
+            background: var(--success);
+            border-color: var(--success);
+        }
+
+        .task-checkbox.checked::after {
+            content: '\2713';
+            color: white;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .task-content {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .task-title {
+            font-size: 0.9rem;
+            font-weight: 500;
+            margin-bottom: 0.125rem;
+        }
+
+        .task-item.completed .task-title {
+            color: var(--text-muted);
+            text-decoration: line-through;
+        }
+
+        .task-meta {
+            display: flex;
+            gap: 0.375rem;
+            flex-wrap: wrap;
+        }
+
+        .task-tag {
+            font-size: 0.7rem;
+            padding: 0.125rem 0.5rem;
+            border-radius: 1rem;
+            background: var(--bg-tertiary);
+            color: var(--text-secondary);
+        }
+
+        .task-tag.work { background: rgba(59,130,246,0.15); color: var(--work); }
+        .task-tag.personal { background: rgba(16,185,129,0.15); color: var(--personal); }
+        .task-tag.curiosity { background: rgba(245,158,11,0.15); color: var(--curiosity); }
+        .task-tag.people { background: rgba(236,72,153,0.15); color: var(--people); }
+        .task-tag.subtag { background: var(--bg-tertiary); color: var(--text-secondary); font-size: 0.65rem; }
+
+        /* Completed Section */
+        .completed-section {
+            margin-top: 2rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border);
+        }
+
+        .completed-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 1rem;
+            cursor: pointer;
+        }
+
+        .completed-title {
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: var(--text-secondary);
+        }
+
+        .completed-count {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            background: var(--bg-tertiary);
+            padding: 0.125rem 0.5rem;
+            border-radius: 1rem;
+        }
+
+        .completed-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.375rem;
+        }
+
+        .completed-list .task-item {
+            opacity: 0.7;
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 3rem 1rem;
+            color: var(--text-muted);
+        }
+
+        .empty-state-icon {
+            font-size: 2rem;
+            margin-bottom: 0.75rem;
+        }
+
+        /* ========== CALENDAR VIEW ========== */
+        .calendar-view {
+            display: grid;
+            grid-template-columns: 100px repeat(7, 1fr);
+            gap: 1px;
+            background: var(--border);
+            border: 1px solid var(--border);
+            border-radius: 0.75rem;
+            overflow: hidden;
+        }
+
+        .calendar-header { background: var(--bg-tertiary); padding: 0.75rem 0.5rem; font-size: 0.75rem; font-weight: 600; text-align: center; color: var(--text-secondary); }
+        .calendar-header.corner { background: var(--bg-secondary); }
+        .calendar-row-label { background: var(--bg-secondary); padding: 0.75rem 0.5rem; font-size: 0.75rem; font-weight: 500; color: var(--text-secondary); display: flex; flex-direction: column; justify-content: center; }
+        .calendar-row-label .time { font-size: 0.65rem; color: var(--text-muted); }
+        .calendar-cell { background: var(--bg-secondary); padding: 0.5rem; min-height: 80px; cursor: pointer; transition: background 0.2s; position: relative; }
+        .calendar-cell:hover { background: var(--bg-tertiary); }
+        .calendar-cell.inactive { background: var(--bg-primary); cursor: default; }
+        .calendar-cell.inactive:hover { background: var(--bg-primary); }
+        .calendar-cell-content { font-size: 0.75rem; color: var(--text-secondary); }
+        .calendar-cell-count { font-size: 0.65rem; color: var(--text-muted); margin-top: 0.25rem; }
+        .calendar-cell.has-tasks .calendar-cell-count { color: var(--accent); font-weight: 500; }
+        .calendar-cell.expanded { background: var(--bg-tertiary); }
+        .calendar-tasks { display: none; margin-top: 0.5rem; padding-top: 0.5rem; border-top: 1px solid var(--border); }
+        .calendar-cell.expanded .calendar-tasks { display: block; animation: slideDown 0.2s ease-out; }
+        .calendar-task { font-size: 0.7rem; padding: 0.375rem 0.5rem; margin-bottom: 0.25rem; background: var(--bg-secondary); border-radius: 0.25rem; border-left: 3px solid var(--border); cursor: pointer; transition: background 0.15s, transform 0.1s; }
+        .calendar-task:hover:not(.empty) { background: var(--bg-primary); transform: translateX(2px); }
+        .calendar-task.empty { cursor: default; color: var(--text-muted); font-style: italic; }
+        .calendar-task.work { border-left-color: var(--work); }
+        .calendar-task.personal { border-left-color: var(--personal); }
+        .calendar-task.curiosity { border-left-color: var(--curiosity); }
+        .calendar-task.people { border-left-color: var(--people); }
+
+        /* ========== KANBAN VIEW ========== */
+        .kanban-view { display: flex; gap: 1rem; }
+        .kanban-column { flex: 1; background: var(--bg-tertiary); border-radius: 0.75rem; padding: 0.75rem; min-height: 300px; max-height: 70vh; overflow-y: auto; transition: background 0.2s, box-shadow 0.2s; }
+        .kanban-column.drag-over { background: var(--bg-secondary); box-shadow: inset 0 0 0 2px var(--accent); }
+        .kanban-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.75rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--border); }
+        .kanban-title { font-size: 0.875rem; font-weight: 600; color: var(--text-primary); }
+        .kanban-count { font-size: 0.75rem; color: var(--text-muted); background: var(--bg-secondary); padding: 0.125rem 0.5rem; border-radius: 1rem; }
+        .kanban-cards { display: flex; flex-direction: column; gap: 0.5rem; }
+        .kanban-card { background: var(--bg-secondary); border: 1px solid var(--border); border-radius: 0.5rem; padding: 0.75rem; cursor: grab; transition: transform 0.1s, box-shadow 0.2s, opacity 0.2s; }
+        .kanban-card:hover { box-shadow: var(--shadow-lg); }
+        .kanban-card:active { cursor: grabbing; }
+        .kanban-card.dragging { opacity: 0.5; transform: rotate(3deg); }
+        .kanban-card-title { font-size: 0.875rem; font-weight: 500; margin-bottom: 0.5rem; color: var(--text-primary); }
+        .kanban-card-tags { display: flex; gap: 0.375rem; flex-wrap: wrap; }
+        .kanban-tag { font-size: 0.65rem; padding: 0.125rem 0.375rem; border-radius: 0.25rem; background: var(--bg-tertiary); color: var(--text-secondary); }
+        .kanban-tag.work { background: rgba(59,130,246,0.15); color: var(--work); }
+        .kanban-tag.personal { background: rgba(16,185,129,0.15); color: var(--personal); }
+        .kanban-tag.curiosity { background: rgba(245,158,11,0.15); color: var(--curiosity); }
+        .kanban-tag.people { background: rgba(236,72,153,0.15); color: var(--people); }
+        .kanban-tag.subtag { background: var(--bg-tertiary); color: var(--text-secondary); font-size: 0.6rem; }
+        .kanban-card.waiting { box-shadow: 0 0 0 2px var(--waiting), 0 0 12px rgba(251,191,36,0.3); }
+        .kanban-empty { text-align: center; padding: 2rem 1rem; color: var(--text-muted); font-size: 0.8rem; }
+
+        /* ========== TASK DETAIL MODAL ========== */
+        .task-modal { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 1000; animation: fadeIn 0.15s ease-out; padding: 1rem; }
+        .task-modal-content { background: var(--bg-secondary); border-radius: 0.75rem; width: 100%; max-width: 500px; max-height: 90vh; overflow-y: auto; box-shadow: var(--shadow-lg); animation: slideUp 0.2s ease-out; }
+        .task-modal-header { display: flex; align-items: flex-start; justify-content: space-between; padding: 1.25rem; border-bottom: 1px solid var(--border); gap: 0.75rem; }
+        .task-modal-title { font-size: 1.125rem; font-weight: 600; margin: 0; flex: 1; }
+        .task-modal-title-input { font-size: 1.125rem; font-weight: 600; flex: 1; border: none; background: transparent; color: var(--text-primary); padding: 0.25rem 0; outline: none; border-bottom: 2px solid transparent; transition: border-color 0.2s; }
+        .task-modal-title-input:focus { border-bottom-color: var(--accent); }
+        .task-modal-close { background: none; border: none; font-size: 1.5rem; color: var(--text-muted); cursor: pointer; padding: 0; line-height: 1; flex-shrink: 0; }
+        .task-modal-close:hover { color: var(--text-primary); }
+        .task-modal-body { padding: 1.25rem; }
+        .task-modal-section { margin-bottom: 1.25rem; }
+        .task-modal-section:last-child { margin-bottom: 0; }
+        .task-modal-label { font-size: 0.75rem; font-weight: 500; color: var(--text-secondary); margin-bottom: 0.5rem; display: block; }
+        .task-modal-edit-field { margin-bottom: 1rem; }
+        .task-modal-edit-field:last-child { margin-bottom: 0; }
+        .task-modal-input, .task-modal-textarea, .task-modal-select { width: 100%; padding: 0.625rem 0.875rem; border: 1px solid var(--border); border-radius: 0.5rem; background: var(--bg-tertiary); color: var(--text-primary); font-size: 0.875rem; font-family: inherit; transition: border-color 0.2s; }
+        .task-modal-textarea { resize: vertical; min-height: 5rem; }
+        .task-modal-input:focus, .task-modal-textarea:focus, .task-modal-select:focus { outline: none; border-color: var(--accent); }
+        .task-modal-toggle { display: flex; align-items: center; gap: 0.5rem; font-size: 0.875rem; color: var(--text-primary); cursor: pointer; padding: 0.75rem; background: var(--bg-tertiary); border-radius: 0.5rem; transition: background 0.2s; }
+        .task-modal-toggle:hover { background: var(--bg-primary); }
+        .task-modal-toggle.active { background: rgba(251,191,36,0.15); box-shadow: inset 0 0 0 1px var(--waiting); }
+        .task-modal-toggle input[type="checkbox"] { width: 1.125rem; height: 1.125rem; accent-color: var(--waiting); }
+        .task-modal-footer { display: flex; gap: 0.5rem; padding: 1rem 1.25rem; border-top: 1px solid var(--border); justify-content: space-between; }
+        .task-modal-btn { padding: 0.5rem 1rem; border-radius: 0.375rem; font-size: 0.875rem; cursor: pointer; transition: all 0.2s; }
+        .task-modal-btn.primary { background: var(--accent); color: white; border: none; position: relative; overflow: hidden; }
+        .task-modal-btn.primary::before { content: ''; position: absolute; top: 0; left: -100%; width: 100%; height: 100%; background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent); transition: left 0.5s ease; }
+        .task-modal-btn.primary:hover::before { left: 100%; }
+        .task-modal-btn.primary:hover { background: var(--accent-hover); box-shadow: 0 0 15px rgba(99,102,241,0.4); }
+        .task-modal-btn.secondary { background: transparent; color: var(--text-secondary); border: 1px solid var(--border); }
+        .task-modal-btn.secondary:hover { background: var(--bg-tertiary); color: var(--text-primary); }
+        .task-modal-btn.danger { background: transparent; color: var(--text-secondary); border: 1px solid var(--border); }
+        .task-modal-btn.danger:hover { border-color: #ef4444; color: #ef4444; background: rgba(239,68,68,0.1); }
+        .task-modal-checkbox { display: flex; align-items: center; gap: 0.75rem; cursor: pointer; }
+        .task-modal-checkbox-box { width: 1.5rem; height: 1.5rem; border: 2px solid var(--border); border-radius: 50%; display: flex; align-items: center; justify-content: center; transition: all 0.2s; flex-shrink: 0; }
+        .task-modal-checkbox-box:hover { border-color: var(--success); background: rgba(34,197,94,0.1); }
+        .task-modal-checkbox-box.checked { background: var(--success); border-color: var(--success); }
+        .task-modal-checkbox-box.checked::after { content: '\2713'; color: white; font-size: 0.875rem; font-weight: 600; }
+
+        /* Suggestion banner */
+        .suggestion-banner { display: flex; align-items: center; gap: 0.5rem; padding: 0.75rem 1rem; background: rgba(99,102,241,0.1); border: 1px solid rgba(99,102,241,0.2); border-radius: 0.5rem; margin-bottom: 1rem; font-size: 0.875rem; color: var(--text-primary); }
+
+        /* Subtag management modal */
+        .subtag-manager { padding: 1rem; }
+        .subtag-category { margin-bottom: 1.5rem; }
+        .subtag-category:last-child { margin-bottom: 0; }
+        .subtag-category-header { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.75rem; }
+        .subtag-category-label { font-weight: 600; font-size: 0.9rem; }
+        .subtag-category-dot { width: 8px; height: 8px; border-radius: 50%; }
+        .subtag-category-dot.work { background: var(--work); }
+        .subtag-category-dot.personal { background: var(--personal); }
+        .subtag-category-dot.curiosity { background: var(--curiosity); }
+        .subtag-category-dot.people { background: var(--people); }
+        .subtag-list { display: flex; flex-wrap: wrap; gap: 0.375rem; margin-bottom: 0.75rem; }
+        .subtag-chip { display: inline-flex; align-items: center; gap: 0.375rem; padding: 0.25rem 0.5rem; background: var(--bg-tertiary); border-radius: 1rem; font-size: 0.8rem; color: var(--text-secondary); }
+        .subtag-chip-remove { background: none; border: none; color: var(--text-muted); cursor: pointer; padding: 0; font-size: 0.9rem; line-height: 1; }
+        .subtag-chip-remove:hover { color: #ef4444; }
+        .subtag-add-form { display: flex; gap: 0.5rem; }
+        .subtag-add-input { flex: 1; padding: 0.375rem 0.625rem; border: 1px solid var(--border); border-radius: 0.375rem; background: var(--bg-secondary); color: var(--text-primary); font-size: 0.8rem; }
+        .subtag-add-input:focus { outline: none; border-color: var(--accent); }
+        .subtag-add-btn { padding: 0.375rem 0.75rem; background: var(--accent); color: white; border: none; border-radius: 0.375rem; font-size: 0.8rem; cursor: pointer; }
+        .subtag-add-btn:hover { background: var(--accent-hover); }
+        .no-subtags { font-size: 0.8rem; color: var(--text-muted); font-style: italic; margin-bottom: 0.75rem; }
+
+        /* ========== ANIMATIONS ========== */
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes slideDown { from { opacity: 0; transform: translateY(-0.5rem); } to { opacity: 1; transform: translateY(0); } }
+
+        /* Confetti */
+        .confetti { position: fixed; pointer-events: none; z-index: 1000; }
+        .confetti-piece { position: absolute; width: 10px; height: 10px; animation: confetti-fall 1s ease-out forwards; }
+        @keyframes confetti-fall { 0% { transform: translateY(0) rotate(0deg); opacity: 1; } 100% { transform: translateY(200px) rotate(720deg); opacity: 0; } }
+
+        /* ========== ROADMAP ========== */
+        .roadmap-modal .task-modal-content {
+            max-width: 600px;
+            max-height: 92vh;
+        }
+        .roadmap-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1.25rem;
+            border-bottom: 1px solid var(--border);
+        }
+        .roadmap-toggle {
+            padding: 0.375rem 0.75rem;
+            border: 1px solid var(--border);
+            background: var(--bg-tertiary);
+            color: var(--text-secondary);
+            border-radius: 0.375rem;
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .roadmap-toggle:hover {
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+        }
+        .roadmap-body {
+            padding: 1.25rem;
+            overflow-y: auto;
+            max-height: calc(92vh - 70px);
+        }
+        .roadmap-section {
+            margin-bottom: 1rem;
+            border: 1px solid var(--border);
+            border-radius: 0.75rem;
+            overflow: hidden;
+        }
+        .roadmap-section-header {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1rem;
+            background: var(--bg-tertiary);
+            cursor: pointer;
+            user-select: none;
+            font-weight: 600;
+            font-size: 0.95rem;
+        }
+        .roadmap-section-header:hover { opacity: 0.8; }
+        .roadmap-section-toggle {
+            margin-left: auto;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            transition: transform 0.2s;
+        }
+        .roadmap-section.collapsed .roadmap-section-toggle { transform: rotate(-90deg); }
+        .roadmap-section-body {
+            padding: 1rem;
+            overflow: hidden;
+            transition: max-height 0.3s ease, opacity 0.3s ease;
+        }
+        .roadmap-section.collapsed .roadmap-section-body {
+            max-height: 0 !important;
+            padding: 0 1rem;
+            opacity: 0;
+        }
+        .roadmap-checkbox {
+            display: flex;
+            align-items: flex-start;
+            gap: 0.5rem;
+            padding: 0.375rem 0;
+            font-size: 0.875rem;
+            cursor: pointer;
+        }
+        .roadmap-checkbox input[type="checkbox"] {
+            margin-top: 0.2rem;
+            width: 1rem;
+            height: 1rem;
+            accent-color: var(--accent);
+            cursor: pointer;
+        }
+        .roadmap-checkbox.checked span {
+            text-decoration: line-through;
+            color: var(--text-muted);
+        }
+        .roadmap-insight {
+            padding: 0.75rem;
+            margin-bottom: 0.5rem;
+            background: var(--bg-tertiary);
+            border-radius: 0.5rem;
+            border-left: 3px solid var(--accent);
+        }
+        .roadmap-insight-date {
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            margin-bottom: 0.375rem;
+        }
+        .roadmap-insight-form {
+            margin-top: 0.75rem;
+            padding: 1rem;
+            background: var(--bg-tertiary);
+            border-radius: 0.5rem;
+            border: 1px dashed var(--border);
+        }
+        .roadmap-insight-form textarea {
+            width: 100%;
+            padding: 0.5rem 0.75rem;
+            border: 1px solid var(--border);
+            border-radius: 0.375rem;
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            font-size: 0.85rem;
+            font-family: inherit;
+            min-height: 4rem;
+            resize: vertical;
+            margin-bottom: 0.5rem;
+        }
+        .roadmap-insight-form textarea:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+        .roadmap-insight-form-actions {
+            display: flex;
+            gap: 0.5rem;
+            justify-content: flex-end;
+        }
+        .roadmap-form-btn {
+            padding: 0.375rem 0.75rem;
+            border-radius: 0.375rem;
+            font-size: 0.8rem;
+            cursor: pointer;
+            border: none;
+        }
+        .roadmap-form-btn.primary {
+            background: var(--accent);
+            color: white;
+        }
+        .roadmap-form-btn.primary:hover {
+            background: var(--accent-hover);
+        }
+        .roadmap-form-btn.secondary {
+            background: transparent;
+            color: var(--text-secondary);
+            border: 1px solid var(--border);
+        }
+        .roadmap-source {
+            width: 100%;
+            min-height: 400px;
+            padding: 1rem;
+            border: 1px solid var(--border);
+            border-radius: 0.5rem;
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+            font-family: 'SF Mono', 'Menlo', 'Monaco', 'Courier New', monospace;
+            font-size: 0.8rem;
+            line-height: 1.6;
+            resize: vertical;
+            tab-size: 4;
+        }
+        .roadmap-source:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+        .roadmap-status-field {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 0.5rem;
+            font-size: 0.875rem;
+        }
+        .roadmap-status-field label {
+            font-weight: 600;
+            color: var(--text-secondary);
+            min-width: 120px;
+            flex-shrink: 0;
+        }
+        .roadmap-status-field input,
+        .roadmap-status-field select {
+            flex: 1;
+            padding: 0.375rem 0.625rem;
+            border: 1px solid var(--border);
+            border-radius: 0.375rem;
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            font-size: 0.85rem;
+            font-family: inherit;
+        }
+        .roadmap-status-field input:focus,
+        .roadmap-status-field select:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+        .roadmap-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.85rem;
+            margin: 0.5rem 0;
+        }
+        .roadmap-table th,
+        .roadmap-table td {
+            padding: 0.5rem 0.75rem;
+            border: 1px solid var(--border);
+            text-align: left;
+        }
+        .roadmap-table th {
+            background: var(--bg-tertiary);
+            font-weight: 600;
+            color: var(--text-secondary);
+        }
+        .roadmap-table td {
+            color: var(--text-primary);
+        }
+        .roadmap-blockquote {
+            padding: 0.75rem 1rem;
+            border-left: 3px solid var(--accent);
+            background: rgba(99, 102, 241, 0.05);
+            color: var(--text-secondary);
+            font-style: italic;
+            margin: 0.5rem 0;
+            border-radius: 0 0.375rem 0.375rem 0;
+        }
+        .roadmap-text {
+            font-size: 0.875rem;
+            line-height: 1.6;
+            color: var(--text-primary);
+            margin: 0.25rem 0;
+        }
+        .roadmap-h3 {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin: 0.75rem 0 0.375rem;
+        }
+        .roadmap-list-item {
+            font-size: 0.85rem;
+            padding: 0.125rem 0 0.125rem 1rem;
+            position: relative;
+            color: var(--text-primary);
+        }
+        .roadmap-list-item::before {
+            content: '\2022';
+            position: absolute;
+            left: 0;
+            color: var(--text-muted);
+        }
+        .roadmap-code {
+            font-family: 'SF Mono', 'Menlo', monospace;
+            background: var(--bg-tertiary);
+            padding: 0.125rem 0.375rem;
+            border-radius: 0.25rem;
+            font-size: 0.8em;
+        }
+
+        /* ========== MOBILE ========== */
+        @media (max-width: 480px) {
+            .container { padding: 1.5rem 1rem; }
+            h1 { font-size: 1.5rem; }
+            .view-btn { padding: 0.5rem 0.375rem; font-size: 0.75rem; }
+            .add-task-form { flex-direction: column; }
+            .add-task-btn { width: 100%; }
+            .home-greeting h2 { font-size: 1.25rem; }
+        }
+
+        @media (max-width: 600px) {
+            .kanban-view { flex-direction: column; }
+            .kanban-column { max-height: none; }
+        }
+
+        @media (max-width: 700px) {
+            .calendar-view { min-width: 700px; }
+            .calendar-wrapper { overflow-x: auto; margin: 0 -1rem; padding: 0 1rem; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container" id="appContainer">
+        <header>
+            <div class="header-row">
+                <h1>Tasks</h1>
+                <div style="display:flex; gap:0.25rem;">
+                    <button class="settings-btn" onclick="showRoadmap()" title="Learning Roadmap">&#128218;</button>
+                    <button class="settings-btn" onclick="showSubtagManager()" title="Manage subtags">&#9881;</button>
+                </div>
+            </div>
+            <p class="subtitle" id="dateDisplay"></p>
+        </header>
+
+        <div class="view-toggle">
+            <button class="view-btn active" data-view="home">Home</button>
+            <button class="view-btn" data-view="calendar">Calendar</button>
+            <button class="view-btn" data-view="kanban">Kanban</button>
+            <button class="view-btn" data-view="tasks">Tasks</button>
+        </div>
+
+        <div id="activeView">
+            <!-- Home View -->
+            <div id="homeView" class="home-view"></div>
+            <!-- Calendar View -->
+            <div id="calendarView" class="calendar-wrapper" style="display: none;"></div>
+            <!-- Kanban View -->
+            <div id="kanbanView" style="display: none;"></div>
+            <!-- Tasks View (categorized) -->
+            <div id="tasksView" class="tasks-view" style="display: none;"></div>
+        </div>
+
+        <div class="completed-section" id="completedSection" style="display: none;">
+            <div class="completed-header">
+                <span class="completed-title">Completed Today</span>
+                <span class="completed-count" id="completedCount">0</span>
+            </div>
+            <div class="completed-list" id="completedList"></div>
+        </div>
+    </div>
+
+    <script>
+        // ===================== DATA MODEL =====================
+        const TIME_BLOCKS = [
+            { id: 'work', label: 'Work Blocks', description: 'M-F, ~10am-4pm', days: [1,2,3,4,5], time: '10am-4pm' },
+            { id: 'personal-admin', label: 'Personal Admin', description: 'Tue/Fri mornings', days: [2,5], time: 'Morning' },
+            { id: 'errands', label: 'Errands', description: 'Fri afternoons', days: [5], time: '2:30-4:30pm' },
+            { id: 'me-time', label: 'Me Time', description: 'Personal recharge', days: [0,1,2,3,4,5,6], time: 'Flexible' }
+        ];
+
+        const CATEGORIES = [
+            { id: 'work', label: 'Work', subtags: [] },
+            { id: 'personal', label: 'Personal', subtags: ['Lott House', 'Berene House', 'Health', 'Errands', 'Finances', 'Subaru', 'Travel'] },
+            { id: 'curiosity', label: 'Curiosity', subtags: [] },
+            { id: 'people', label: 'People', subtags: [] }
+        ];
+
+        const KANBAN_COLUMNS = [
+            { id: 'todo', label: 'To Do' },
+            { id: 'in-progress', label: 'In Progress' },
+            { id: 'done', label: 'Done' }
+        ];
+
+        const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+
+        let customSubtags = JSON.parse(localStorage.getItem('customSubtags')) || {};
+
+        function getSubtagsForCategory(categoryId) {
+            const cat = CATEGORIES.find(c => c.id === categoryId);
+            const defaults = cat ? cat.subtags : [];
+            const custom = customSubtags[categoryId] || [];
+            return [...new Set([...defaults, ...custom])];
+        }
+
+        function saveCustomSubtags() {
+            localStorage.setItem('customSubtags', JSON.stringify(customSubtags));
+        }
+
+        // ===================== KEYWORD MAPPINGS =====================
+        const KEYWORD_MAPPINGS = {
+            work: ['meeting', 'deadline', 'project', 'client', 'report', 'presentation', 'email', 'call with', 'review', 'sprint', 'standup', 'jira', 'slack', 'deploy', 'release', 'code', 'pr ', 'pull request', 'merge', 'bug', 'feature', 'task', 'ticket', 'invoice', 'contract', 'proposal'],
+            personal: ['house', 'home', 'clean', 'laundry', 'grocery', 'groceries', 'doctor', 'dentist', 'pharmacy', 'prescription', 'appointment', 'repair', 'fix', 'maintenance', 'bill', 'pay', 'bank', 'insurance', 'car', 'oil change', 'tire', 'dmv', 'license', 'passport', 'travel', 'flight', 'hotel', 'book', 'reservation', 'pack', 'errand'],
+            curiosity: ['read', 'learn', 'study', 'research', 'explore', 'try', 'experiment', 'course', 'tutorial', 'article', 'podcast', 'video', 'watch', 'documentary', 'hobby', 'practice', 'skill'],
+            people: ['call', 'text', 'message', 'write to', 'catch up', 'meet', 'coffee', 'lunch', 'dinner', 'birthday', 'gift', 'thank', 'congrat', 'check in', 'visit', 'invite', 'party', 'wedding', 'family', 'friend', 'mom', 'dad', 'brother', 'sister']
+        };
+
+        const SUBTAG_MAPPINGS = {
+            'Lott House': ['lott', 'lott house'],
+            'Berene House': ['berene', 'berene house'],
+            'Health': ['doctor', 'dentist', 'pharmacy', 'prescription', 'health', 'medical', 'therapy', 'therapist', 'gym', 'workout', 'exercise', 'vitamin', 'medicine'],
+            'Errands': ['errand', 'pickup', 'pick up', 'drop off', 'return', 'exchange', 'store', 'shop', 'buy', 'get'],
+            'Finances': ['bank', 'bill', 'pay', 'payment', 'invoice', 'tax', 'insurance', 'budget', 'transfer', 'deposit', 'withdraw', 'finance', 'money', 'credit', 'debt'],
+            'Subaru': ['subaru', 'car', 'oil change', 'tire', 'mechanic', 'auto', 'vehicle', 'gas', 'carwash'],
+            'Travel': ['travel', 'flight', 'hotel', 'airbnb', 'trip', 'vacation', 'pack', 'passport', 'visa', 'book flight', 'reservation', 'itinerary']
+        };
+
+        const TIME_BLOCK_MAPPINGS = {
+            'work': ['meeting', 'client', 'project', 'deadline', 'sprint', 'deploy', 'code', 'review', 'report'],
+            'personal-admin': ['bill', 'bank', 'insurance', 'pharmacy', 'appointment', 'call', 'paperwork'],
+            'errands': ['errand', 'pickup', 'pick up', 'drop off', 'store', 'shop', 'grocery', 'buy', 'get', 'return'],
+            'me-time': ['read', 'hobby', 'practice', 'workout', 'exercise', 'relax', 'journal']
+        };
+
+        function suggestFromText(text) {
+            const lower = text.toLowerCase();
+            let bestCat = null, bestCatScore = 0;
+            let bestSubtag = null, bestSubtagScore = 0;
+            let bestBlock = null, bestBlockScore = 0;
+
+            for (const [catId, keywords] of Object.entries(KEYWORD_MAPPINGS)) {
+                for (const kw of keywords) {
+                    if (lower.includes(kw) && kw.length > bestCatScore) {
+                        bestCatScore = kw.length;
+                        bestCat = catId;
+                    }
+                }
+            }
+
+            if (bestCat === 'personal' || !bestCat) {
+                for (const [subtag, keywords] of Object.entries(SUBTAG_MAPPINGS)) {
+                    for (const kw of keywords) {
+                        if (lower.includes(kw) && kw.length > bestSubtagScore) {
+                            bestSubtagScore = kw.length;
+                            bestSubtag = subtag;
+                            if (!bestCat) bestCat = 'personal';
+                        }
+                    }
+                }
+            }
+
+            for (const [blockId, keywords] of Object.entries(TIME_BLOCK_MAPPINGS)) {
+                for (const kw of keywords) {
+                    if (lower.includes(kw) && kw.length > bestBlockScore) {
+                        bestBlockScore = kw.length;
+                        bestBlock = blockId;
+                    }
+                }
+            }
+
+            // Extract a concise title (first sentence or first ~60 chars)
+            let title = text.trim();
+            let notes = '';
+            const sentences = text.split(/[.!?\n]+/).map(s => s.trim()).filter(Boolean);
+            if (sentences.length > 1) {
+                title = sentences[0];
+                notes = sentences.slice(1).join('. ');
+            } else if (title.length > 80) {
+                const cutoff = title.lastIndexOf(' ', 60);
+                if (cutoff > 20) {
+                    notes = title.substring(cutoff + 1);
+                    title = title.substring(0, cutoff);
+                }
+            }
+
+            return { title, notes, category: bestCat, subtag: bestSubtag, timeBlock: bestBlock };
+        }
+
+        // ===================== AI AGENT (simulated, API-ready) =====================
+        // To swap in a real API, replace processAgentMessage() with an API call
+        async function processAgentMessage(userMessage) {
+            const lower = userMessage.toLowerCase();
+
+            // Check for review/summary requests
+            if (lower.includes('review') || lower.includes("what's") || lower.includes('summary') || lower.includes('how many') || lower.includes('today')) {
+                return generateDaySummaryResponse();
+            }
+
+            if (lower.includes('urgent') || lower.includes('priority') || lower.includes('important')) {
+                return generateUrgentResponse();
+            }
+
+            if (lower.includes('waiting') || lower.includes('blocked')) {
+                return generateWaitingResponse();
+            }
+
+            // Roadmap commands
+            if (lower.includes('add insight') || lower.includes('log insight') || lower.includes('log learning') || lower.match(/^learned\b/)) {
+                return handleRoadmapInsightChat(userMessage);
+            }
+            if (lower.includes('update status') || lower.includes('roadmap status')) {
+                return handleRoadmapStatusChat(userMessage);
+            }
+            if (lower.includes('check off') || lower.includes('complete milestone') || lower.includes('mark milestone')) {
+                return handleRoadmapCheckoffChat(userMessage);
+            }
+
+            // Default: treat as task creation
+            return generateTaskCreationResponse(userMessage);
+        }
+
+        function generateDaySummaryResponse() {
+            const active = tasks.filter(t => !t.completed);
+            const today = new Date().toDateString();
+            const doneToday = tasks.filter(t => t.completed && t.completedAt && new Date(t.completedAt).toDateString() === today).length;
+            const waiting = active.filter(t => t.waitingOn).length;
+            const byStatus = { todo: 0, 'in-progress': 0 };
+            active.forEach(t => { if (byStatus[t.status] !== undefined) byStatus[t.status]++; });
+
+            let text = `Here's your day at a glance:\n\n`;
+            text += `You have <strong>${active.length} active tasks</strong>`;
+            if (byStatus['in-progress'] > 0) text += ` (${byStatus['in-progress']} in progress)`;
+            text += `.`;
+            if (doneToday > 0) text += ` You've completed <strong>${doneToday}</strong> today already.`;
+            if (waiting > 0) text += `\n\n${waiting} task${waiting > 1 ? 's are' : ' is'} <strong>waiting on someone</strong>.`;
+
+            return { type: 'text', content: text };
+        }
+
+        function generateUrgentResponse() {
+            const active = tasks.filter(t => !t.completed);
+            const inProgress = active.filter(t => t.status === 'in-progress');
+            const waiting = active.filter(t => t.waitingOn);
+
+            let text = '';
+            if (inProgress.length > 0) {
+                text += `<strong>In progress now:</strong>\n`;
+                inProgress.forEach(t => { text += `&bull; ${escapeHtml(t.title)}\n`; });
+            }
+            if (waiting.length > 0) {
+                text += `\n<strong>Waiting on someone:</strong>\n`;
+                waiting.forEach(t => { text += `&bull; ${escapeHtml(t.title)}\n`; });
+            }
+            if (text === '') {
+                text = 'Nothing urgent right now. Your slate is clean.';
+            }
+
+            return { type: 'text', content: text };
+        }
+
+        function generateWaitingResponse() {
+            const waiting = tasks.filter(t => !t.completed && t.waitingOn);
+            if (waiting.length === 0) {
+                return { type: 'text', content: "You don't have any tasks waiting on someone right now." };
+            }
+            let text = `<strong>${waiting.length} task${waiting.length > 1 ? 's' : ''} waiting on someone:</strong>\n\n`;
+            waiting.forEach(t => {
+                const cat = t.category ? CATEGORIES.find(c => c.id === t.category)?.label : '';
+                text += `&bull; ${escapeHtml(t.title)}${cat ? ` <em>(${cat})</em>` : ''}\n`;
+            });
+            return { type: 'text', content: text };
+        }
+
+        function generateTaskCreationResponse(userMessage) {
+            const suggestion = suggestFromText(userMessage);
+            return { type: 'task-preview', ...suggestion };
+        }
+
+        // ===================== STATE =====================
+        let tasks = JSON.parse(localStorage.getItem('tasks')) || [];
+        let currentView = 'home';
+        let expandedCalendarCell = null;
+        let homeAnimated = false;
+        let chatMessages = [];
+
+        function migrateTasks() {
+            let changed = false;
+            tasks = tasks.map(task => {
+                if (!task.status) {
+                    changed = true;
+                    return { ...task, status: task.completed ? 'done' : 'todo' };
+                }
+                return task;
+            });
+            if (changed) saveTasks();
+        }
+
+        function saveTasks() {
+            localStorage.setItem('tasks', JSON.stringify(tasks));
+        }
+
+        // ===================== INIT =====================
+        document.addEventListener('DOMContentLoaded', () => {
+            migrateTasks();
+            updateDateDisplay();
+            setupEventListeners();
+            renderCurrentView();
+        });
+
+        function updateDateDisplay() {
+            const now = new Date();
+            document.getElementById('dateDisplay').textContent = now.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
+        }
+
+        function setupEventListeners() {
+            document.querySelectorAll('.view-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    document.querySelectorAll('.view-btn').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    currentView = btn.dataset.view;
+
+                    const container = document.getElementById('appContainer');
+                    if (currentView === 'home' || currentView === 'tasks') {
+                        container.classList.remove('wide');
+                    } else {
+                        container.classList.add('wide');
+                    }
+
+                    renderCurrentView();
+                });
+            });
+        }
+
+        function renderCurrentView() {
+            const views = ['homeView', 'calendarView', 'kanbanView', 'tasksView'];
+            views.forEach(v => document.getElementById(v).style.display = 'none');
+            document.getElementById('completedSection').style.display = 'none';
+
+            if (currentView === 'home') renderHomeView();
+            else if (currentView === 'calendar') renderCalendarView();
+            else if (currentView === 'kanban') renderKanbanView();
+            else if (currentView === 'tasks') renderTasksView();
+        }
+
+        // ===================== HOME VIEW =====================
+        function renderHomeView() {
+            const el = document.getElementById('homeView');
+            el.style.display = 'block';
+
+            const hour = new Date().getHours();
+            let greeting = 'Good evening';
+            if (hour < 12) greeting = 'Good morning';
+            else if (hour < 17) greeting = 'Good afternoon';
+
+            const now = new Date();
+            const dateStr = now.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
+            const active = tasks.filter(t => !t.completed);
+            const inProgress = active.filter(t => t.status === 'in-progress').length;
+            const workTasks = active.filter(t => t.category === 'work').length;
+            const waiting = active.filter(t => t.waitingOn).length;
+            const today = new Date().toDateString();
+            const doneToday = tasks.filter(t => t.completed && t.completedAt && new Date(t.completedAt).toDateString() === today).length;
+
+            const summaryLines = [
+                dateStr + ' &middot; Sunny, 68&deg;F',
+                `${active.length} tasks open${inProgress > 0 ? `, ${inProgress} in progress` : ''}`,
+                workTasks > 0 ? `${workTasks} work tasks in your blocks today` : 'No work tasks scheduled',
+                waiting > 0 ? `${waiting} task${waiting > 1 ? 's' : ''} waiting on someone` : '',
+                doneToday > 0 ? `${doneToday} completed today` : ''
+            ].filter(Boolean);
+
+            // Build chat history HTML
+            let chatHtml = '';
+            chatMessages.forEach(msg => {
+                if (msg.role === 'user') {
+                    chatHtml += `<div class="chat-message user">${escapeHtml(msg.text)}</div>`;
+                } else if (msg.type === 'text') {
+                    chatHtml += `<div class="chat-message agent">${msg.content}</div>`;
+                } else if (msg.type === 'task-preview') {
+                    chatHtml += renderChatTaskPreview(msg);
+                }
+            });
+
+            el.innerHTML = `
+                <div class="home-greeting">
+                    <h2>${greeting}, <strong>Margo</strong></h2>
+                </div>
+                <div class="home-summary" id="homeSummary">
+                    ${summaryLines.map((line, i) => `<div class="home-summary-line" data-index="${i}">${line}</div>`).join('')}
+                </div>
+                <div class="home-quick-actions">
+                    <button class="quick-action-btn" onclick="quickAction('add')">Add task</button>
+                    <button class="quick-action-btn" onclick="quickAction('review')">Review day</button>
+                    <button class="quick-action-btn" onclick="quickAction('urgent')">What's urgent?</button>
+                </div>
+                <div class="chat-container">
+                    <div class="chat-input-area">
+                        <input type="text" class="chat-input" id="chatInput" placeholder="Tell me what you need..." autocomplete="off">
+                        <button class="chat-send-btn" onclick="sendChatMessage()">&#10148;</button>
+                    </div>
+                    <div class="chat-messages" id="chatMessages">
+                        ${chatHtml}
+                    </div>
+                </div>
+            `;
+
+            document.getElementById('chatInput').addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') { e.preventDefault(); sendChatMessage(); }
+            });
+
+            // Animate summary lines
+            if (!homeAnimated) {
+                const lines = el.querySelectorAll('.home-summary-line');
+                lines.forEach((line, i) => {
+                    setTimeout(() => line.classList.add('visible'), 200 + i * 300);
+                });
+                homeAnimated = true;
+            } else {
+                el.querySelectorAll('.home-summary-line').forEach(l => l.classList.add('instant'));
+            }
+        }
+
+        function quickAction(action) {
+            const input = document.getElementById('chatInput');
+            if (action === 'add') {
+                input.focus();
+                input.placeholder = 'Describe your task...';
+            } else if (action === 'review') {
+                handleChatInput('Review my day');
+            } else if (action === 'urgent') {
+                handleChatInput("What's urgent?");
+            }
+        }
+
+        async function sendChatMessage() {
+            const input = document.getElementById('chatInput');
+            const text = input.value.trim();
+            if (!text) return;
+            input.value = '';
+            handleChatInput(text);
+        }
+
+        async function handleChatInput(text) {
+            chatMessages.push({ role: 'user', text });
+
+            // Show user message + thinking indicator
+            const messagesEl = document.getElementById('chatMessages');
+            messagesEl.innerHTML += `<div class="chat-message user">${escapeHtml(text)}</div>`;
+            messagesEl.innerHTML += `<div class="chat-message agent thinking" id="thinkingMsg"><span class="thinking-dots"><span>.</span><span>.</span><span>.</span></span></div>`;
+            messagesEl.scrollTop = messagesEl.scrollHeight;
+
+            // Simulate delay (makes it feel more conversational)
+            await new Promise(r => setTimeout(r, 500 + Math.random() * 400));
+
+            const response = await processAgentMessage(text);
+            chatMessages.push({ role: 'agent', ...response });
+
+            // Remove thinking, add response
+            const thinking = document.getElementById('thinkingMsg');
+            if (thinking) thinking.remove();
+
+            if (response.type === 'text') {
+                messagesEl.innerHTML += `<div class="chat-message agent">${response.content}</div>`;
+            } else if (response.type === 'task-preview') {
+                messagesEl.innerHTML += renderChatTaskPreview(response);
+            }
+
+            messagesEl.scrollTop = messagesEl.scrollHeight;
+        }
+
+        function renderChatTaskPreview(data) {
+            const id = 'preview-' + Date.now();
+            const catLabel = data.category ? CATEGORIES.find(c => c.id === data.category)?.label : '';
+            const blockLabel = data.timeBlock ? TIME_BLOCKS.find(t => t.id === data.timeBlock)?.label : '';
+
+            const catOptions = CATEGORIES.map(c =>
+                `<option value="${c.id}" ${data.category === c.id ? 'selected' : ''}>${c.label}</option>`
+            ).join('');
+
+            const subtags = data.category ? getSubtagsForCategory(data.category) : [];
+            const subtagOptions = subtags.map(s =>
+                `<option value="${s}" ${data.subtag === s ? 'selected' : ''}>${s}</option>`
+            ).join('');
+
+            const blockOptions = TIME_BLOCKS.map(t =>
+                `<option value="${t.id}" ${data.timeBlock === t.id ? 'selected' : ''}>${t.label}</option>`
+            ).join('');
+
+            return `
+                <div class="chat-message agent">
+                    Here's what I understood:
+                    <div class="task-preview" id="${id}">
+                        <div class="task-preview-row">
+                            <span class="task-preview-label">Title</span>
+                            <span class="task-preview-value">${escapeHtml(data.title)}</span>
+                        </div>
+                        ${data.notes ? `<div class="task-preview-row">
+                            <span class="task-preview-label">Notes</span>
+                            <span class="task-preview-value">${escapeHtml(data.notes)}</span>
+                        </div>` : ''}
+                        ${catLabel ? `<div class="task-preview-row">
+                            <span class="task-preview-label">Category</span>
+                            <span class="task-preview-value">${catLabel}${data.subtag ? ' / ' + escapeHtml(data.subtag) : ''}</span>
+                        </div>` : ''}
+                        ${blockLabel ? `<div class="task-preview-row">
+                            <span class="task-preview-label">Block</span>
+                            <span class="task-preview-value">${blockLabel}</span>
+                        </div>` : ''}
+                        <div class="task-preview-actions">
+                            <button class="preview-btn confirm" onclick="confirmPreviewTask('${id}')">Looks good!</button>
+                            <button class="preview-btn edit" onclick="togglePreviewEdit('${id}')">Edit</button>
+                        </div>
+                        <div class="preview-edit-fields" id="${id}-edit">
+                            <div class="preview-edit-field">
+                                <label>Title</label>
+                                <input type="text" id="${id}-title" value="${escapeHtml(data.title)}">
+                            </div>
+                            <div class="preview-edit-field">
+                                <label>Notes</label>
+                                <textarea id="${id}-notes">${escapeHtml(data.notes || '')}</textarea>
+                            </div>
+                            <div class="preview-edit-field">
+                                <label>Category</label>
+                                <select id="${id}-cat" onchange="updatePreviewSubtags('${id}')">
+                                    <option value="">None</option>
+                                    ${catOptions}
+                                </select>
+                            </div>
+                            <div class="preview-edit-field" id="${id}-subtag-field" style="${subtags.length > 0 ? '' : 'display:none'}">
+                                <label>Subtag</label>
+                                <select id="${id}-subtag">
+                                    <option value="">None</option>
+                                    ${subtagOptions}
+                                </select>
+                            </div>
+                            <div class="preview-edit-field">
+                                <label>Time Block</label>
+                                <select id="${id}-block">
+                                    <option value="">None</option>
+                                    ${blockOptions}
+                                </select>
+                            </div>
+                            <div style="margin-top: 0.5rem;">
+                                <button class="preview-btn confirm" onclick="confirmPreviewTask('${id}', true)">Save task</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function togglePreviewEdit(id) {
+            const el = document.getElementById(id + '-edit');
+            el.classList.toggle('visible');
+        }
+
+        function updatePreviewSubtags(id) {
+            const catId = document.getElementById(id + '-cat').value;
+            const field = document.getElementById(id + '-subtag-field');
+            const select = document.getElementById(id + '-subtag');
+            if (!catId) { field.style.display = 'none'; return; }
+            const subtags = getSubtagsForCategory(catId);
+            if (subtags.length === 0) { field.style.display = 'none'; return; }
+            field.style.display = '';
+            select.innerHTML = '<option value="">None</option>' + subtags.map(s => `<option value="${s}">${s}</option>`).join('');
+        }
+
+        function confirmPreviewTask(id, fromEdit = false) {
+            let title, notes, category, subtag, timeBlock;
+            const previewEl = document.getElementById(id);
+
+            if (fromEdit) {
+                title = document.getElementById(id + '-title').value.trim();
+                notes = document.getElementById(id + '-notes').value.trim();
+                category = document.getElementById(id + '-cat').value || null;
+                subtag = document.getElementById(id + '-subtag')?.value || null;
+                timeBlock = document.getElementById(id + '-block').value || null;
+            } else {
+                // Find matching chat message data
+                const msg = chatMessages.find(m => m.role === 'agent' && m.type === 'task-preview');
+                title = msg?.title || previewEl.querySelector('.task-preview-value')?.textContent || 'New task';
+                notes = msg?.notes || '';
+                category = msg?.category || null;
+                subtag = msg?.subtag || null;
+                timeBlock = msg?.timeBlock || null;
+            }
+
+            if (!title) return;
+
+            const task = {
+                id: Date.now().toString(),
+                title,
+                notes,
+                links: [],
+                category,
+                subtag,
+                timeBlock,
+                completed: false,
+                completedAt: null,
+                status: 'todo',
+                waitingOn: false,
+                createdAt: new Date().toISOString()
+            };
+
+            tasks.unshift(task);
+            saveTasks();
+
+            // Replace preview with confirmation
+            previewEl.innerHTML = `<div style="text-align:center; padding: 0.5rem; color: var(--success); font-weight: 500;">Task added!</div>`;
+
+            chatMessages.push({ role: 'agent', type: 'text', content: `Added "<strong>${escapeHtml(title)}</strong>" to your tasks.` });
+        }
+
+        // ===================== TASKS VIEW (categorized) =====================
+        function renderTasksView() {
+            const el = document.getElementById('tasksView');
+            el.style.display = 'block';
+
+            const active = tasks.filter(t => !t.completed);
+            const uncategorized = active.filter(t => !t.category);
+
+            let html = `
+                <form class="add-task-form" onsubmit="handleTasksFormSubmit(event)">
+                    <input type="text" class="add-task-input" id="tasksInput" placeholder="Add a task..." autocomplete="off">
+                    <button type="submit" class="add-task-btn">Add</button>
+                </form>
+            `;
+
+            // Inbox
+            if (uncategorized.length > 0) {
+                html += renderCategoryGroup('inbox', 'Inbox', uncategorized);
+            }
+
+            // Category groups
+            CATEGORIES.forEach(cat => {
+                const catTasks = active.filter(t => t.category === cat.id);
+                if (catTasks.length === 0) return;
+
+                const subtags = getSubtagsForCategory(cat.id);
+                const tasksWithSubtag = catTasks.filter(t => t.subtag);
+                const tasksWithoutSubtag = catTasks.filter(t => !t.subtag);
+
+                if (subtags.length > 0 && tasksWithSubtag.length > 0) {
+                    html += renderCategoryGroupWithSubtags(cat, catTasks, tasksWithoutSubtag, subtags);
+                } else {
+                    html += renderCategoryGroup(cat.id, cat.label, catTasks);
+                }
+            });
+
+            // Completed today
+            const today = new Date().toDateString();
+            const doneToday = tasks.filter(t => t.completed && t.completedAt && new Date(t.completedAt).toDateString() === today);
+            if (doneToday.length > 0) {
+                html += `
+                    <div class="completed-section" style="display: block;">
+                        <div class="completed-header">
+                            <span class="completed-title">Completed Today</span>
+                            <span class="completed-count">${doneToday.length}</span>
+                        </div>
+                        <div class="completed-list task-list">
+                            ${doneToday.map(t => renderTaskItem(t, true)).join('')}
+                        </div>
+                    </div>
+                `;
+            }
+
+            if (active.length === 0 && doneToday.length === 0) {
+                html += `<div class="empty-state"><div class="empty-state-icon">&#10024;</div><p>No tasks yet. Add one above!</p></div>`;
+            }
+
+            el.innerHTML = html;
+        }
+
+        function renderCategoryGroup(catId, label, catTasks) {
+            return `
+                <div class="category-group" id="group-${catId}">
+                    <div class="category-group-header" onclick="toggleCategoryGroup('${catId}')">
+                        <span class="category-dot ${catId}"></span>
+                        <span class="category-group-title">${label}</span>
+                        <span class="category-group-count">${catTasks.length}</span>
+                        <span class="category-group-toggle">&#9660;</span>
+                    </div>
+                    <div class="category-group-body task-list" style="max-height: ${catTasks.length * 70}px;">
+                        ${catTasks.map(t => renderTaskItem(t)).join('')}
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderCategoryGroupWithSubtags(cat, allTasks, ungrouped, subtags) {
+            let inner = '';
+
+            if (ungrouped.length > 0) {
+                inner += ungrouped.map(t => renderTaskItem(t)).join('');
+            }
+
+            subtags.forEach(sub => {
+                const subTasks = allTasks.filter(t => t.subtag === sub);
+                if (subTasks.length === 0) return;
+                inner += `
+                    <div class="subtag-group">
+                        <div class="subtag-group-title">${escapeHtml(sub)}</div>
+                        <div class="task-list">
+                            ${subTasks.map(t => renderTaskItem(t)).join('')}
+                        </div>
+                    </div>
+                `;
+            });
+
+            return `
+                <div class="category-group" id="group-${cat.id}">
+                    <div class="category-group-header" onclick="toggleCategoryGroup('${cat.id}')">
+                        <span class="category-dot ${cat.id}"></span>
+                        <span class="category-group-title">${cat.label}</span>
+                        <span class="category-group-count">${allTasks.length}</span>
+                        <span class="category-group-toggle">&#9660;</span>
+                    </div>
+                    <div class="category-group-body" style="max-height: ${allTasks.length * 100 + subtags.length * 30}px;">
+                        ${inner}
+                    </div>
+                </div>
+            `;
+        }
+
+        function toggleCategoryGroup(catId) {
+            const group = document.getElementById('group-' + catId);
+            if (group) group.classList.toggle('collapsed');
+        }
+
+        function handleTasksFormSubmit(e) {
+            e.preventDefault();
+            const input = document.getElementById('tasksInput');
+            const title = input.value.trim();
+            if (!title) return;
+            input.value = '';
+            showAddTaskModal(title, suggestFromText(title));
+        }
+
+        // ===================== ADD TASK MODAL =====================
+        function showAddTaskModal(title, suggestion) {
+            closeTaskModal();
+
+            const catOptions = CATEGORIES.map(c =>
+                `<option value="${c.id}" ${suggestion.category === c.id ? 'selected' : ''}>${c.label}</option>`
+            ).join('');
+
+            const subtags = suggestion.category ? getSubtagsForCategory(suggestion.category) : [];
+            const subtagOptions = subtags.map(s =>
+                `<option value="${s}" ${suggestion.subtag === s ? 'selected' : ''}>${s}</option>`
+            ).join('');
+
+            const hasSuggestion = suggestion.category || suggestion.subtag || suggestion.timeBlock;
+
+            const blockOptions = TIME_BLOCKS.map(t =>
+                `<option value="${t.id}" ${suggestion.timeBlock === t.id ? 'selected' : ''}>${t.label}</option>`
+            ).join('');
+
+            const sugLabel = [];
+            if (suggestion.category) sugLabel.push(CATEGORIES.find(c => c.id === suggestion.category)?.label);
+            if (suggestion.subtag) sugLabel.push(suggestion.subtag);
+
+            const modal = document.createElement('div');
+            modal.className = 'task-modal';
+            modal.id = 'taskModal';
+
+            modal.innerHTML = `
+                <div class="task-modal-content">
+                    <div class="task-modal-header">
+                        <h3 class="task-modal-title">New Task</h3>
+                        <button class="task-modal-close" onclick="closeTaskModal()">&times;</button>
+                    </div>
+                    <div class="task-modal-body">
+                        <div class="task-modal-edit-field">
+                            <label class="task-modal-label">Title</label>
+                            <input type="text" class="task-modal-input" id="newTaskTitle" value="${escapeHtml(suggestion.title || title)}">
+                        </div>
+                        ${suggestion.notes ? `<div class="task-modal-edit-field">
+                            <label class="task-modal-label">Notes</label>
+                            <textarea class="task-modal-textarea" id="newTaskNotes">${escapeHtml(suggestion.notes)}</textarea>
+                        </div>` : `<div class="task-modal-edit-field"><label class="task-modal-label">Notes</label><textarea class="task-modal-textarea" id="newTaskNotes" placeholder="Add notes..."></textarea></div>`}
+                        ${hasSuggestion ? `
+                            <div class="suggestion-banner">
+                                <span>&#10024;</span>
+                                <span>Suggested: <strong>${sugLabel.join(' / ')}</strong>${suggestion.timeBlock ? ` &middot; ${TIME_BLOCKS.find(t => t.id === suggestion.timeBlock)?.label}` : ''}</span>
+                            </div>
+                        ` : ''}
+                        <div class="task-modal-edit-field">
+                            <label class="task-modal-label">Category</label>
+                            <select class="task-modal-select" id="newTaskCategory" onchange="updateSubtagOptions()">
+                                <option value="">None</option>
+                                ${catOptions}
+                            </select>
+                        </div>
+                        <div class="task-modal-edit-field" id="subtagField" style="${subtags.length > 0 ? '' : 'display:none'}">
+                            <label class="task-modal-label">Subtag</label>
+                            <select class="task-modal-select" id="newTaskSubtag">
+                                <option value="">None</option>
+                                ${subtagOptions}
+                            </select>
+                        </div>
+                        <div class="task-modal-edit-field">
+                            <label class="task-modal-label">Time Block</label>
+                            <select class="task-modal-select" id="newTaskTimeblock">
+                                <option value="">None</option>
+                                ${blockOptions}
+                            </select>
+                        </div>
+                    </div>
+                    <div class="task-modal-footer">
+                        <button class="task-modal-btn secondary" onclick="closeTaskModal()">Cancel</button>
+                        <button class="task-modal-btn primary" onclick="confirmAddTask()">Add Task</button>
+                    </div>
+                </div>
+            `;
+
+            document.body.appendChild(modal);
+            modal.addEventListener('click', (e) => { if (e.target === modal) closeTaskModal(); });
+            document.addEventListener('keydown', handleModalEscape);
+
+            const titleInput = document.getElementById('newTaskTitle');
+            titleInput.focus();
+            titleInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); confirmAddTask(); } });
+        }
+
+        function updateSubtagOptions() {
+            const catId = document.getElementById('newTaskCategory').value;
+            const field = document.getElementById('subtagField');
+            const select = document.getElementById('newTaskSubtag');
+            if (!catId) { field.style.display = 'none'; return; }
+            const subtags = getSubtagsForCategory(catId);
+            if (subtags.length === 0) { field.style.display = 'none'; return; }
+            field.style.display = '';
+            select.innerHTML = '<option value="">None</option>' + subtags.map(s => `<option value="${s}">${s}</option>`).join('');
+        }
+
+        function confirmAddTask() {
+            const title = document.getElementById('newTaskTitle').value.trim();
+            if (!title) return;
+            const notes = document.getElementById('newTaskNotes')?.value.trim() || '';
+            const category = document.getElementById('newTaskCategory').value || null;
+            const subtag = document.getElementById('newTaskSubtag')?.value || null;
+            const timeBlock = document.getElementById('newTaskTimeblock')?.value || null;
+
+            tasks.unshift({
+                id: Date.now().toString(),
+                title, notes, links: [], category, subtag, timeBlock,
+                completed: false, completedAt: null, status: 'todo', waitingOn: false,
+                createdAt: new Date().toISOString()
+            });
+
+            saveTasks();
+            closeTaskModal();
+            renderCurrentView();
+        }
+
+        // ===================== TASK DETAIL MODAL =====================
+        function showTaskModal(taskId, event) {
+            if (event && event.target.classList.contains('dragging')) return;
+            if (event) event.stopPropagation();
+            const task = tasks.find(t => t.id === taskId);
+            if (!task) return;
+            renderTaskModal(task);
+        }
+
+        function renderTaskModal(task) {
+            closeTaskModal();
+
+            const catOptions = CATEGORIES.map(c => `<option value="${c.id}" ${task.category === c.id ? 'selected' : ''}>${c.label}</option>`).join('');
+            const subtags = task.category ? getSubtagsForCategory(task.category) : [];
+            const subtagOptions = subtags.map(s => `<option value="${s}" ${task.subtag === s ? 'selected' : ''}>${s}</option>`).join('');
+            const blockOptions = TIME_BLOCKS.map(t => `<option value="${t.id}" ${task.timeBlock === t.id ? 'selected' : ''}>${t.label}</option>`).join('');
+
+            const modal = document.createElement('div');
+            modal.className = 'task-modal';
+            modal.id = 'taskModal';
+            modal.dataset.taskId = task.id;
+
+            modal.innerHTML = `
+                <div class="task-modal-content">
+                    <div class="task-modal-header">
+                        <div class="task-modal-checkbox" onclick="toggleCompleteFromModal('${task.id}', event)">
+                            <div class="task-modal-checkbox-box ${task.completed ? 'checked' : ''}"></div>
+                        </div>
+                        <input type="text" class="task-modal-title-input" id="modalTitle" value="${escapeHtml(task.title)}"
+                            style="${task.completed ? 'text-decoration: line-through; color: var(--text-muted);' : ''}"
+                            onchange="autoSaveTask('${task.id}')">
+                        <button class="task-modal-close" onclick="saveAndCloseModal('${task.id}')">&times;</button>
+                    </div>
+                    <div class="task-modal-body">
+                        <div class="task-modal-edit-field">
+                            <label class="task-modal-label">Category</label>
+                            <select class="task-modal-select" id="modalCategory" onchange="updateModalSubtags('${task.id}'); autoSaveTask('${task.id}')">
+                                <option value="">None</option>
+                                ${catOptions}
+                            </select>
+                        </div>
+                        <div class="task-modal-edit-field" id="modalSubtagField" style="${subtags.length > 0 ? '' : 'display:none'}">
+                            <label class="task-modal-label">Subtag</label>
+                            <select class="task-modal-select" id="modalSubtag" onchange="autoSaveTask('${task.id}')">
+                                <option value="">None</option>
+                                ${subtagOptions}
+                            </select>
+                        </div>
+                        <div class="task-modal-edit-field">
+                            <label class="task-modal-label">Notes</label>
+                            <textarea class="task-modal-textarea" id="modalNotes" placeholder="Add notes..." onchange="autoSaveTask('${task.id}')">${escapeHtml(task.notes)}</textarea>
+                        </div>
+                        <div class="task-modal-edit-field">
+                            <label class="task-modal-label">Links (one per line)</label>
+                            <textarea class="task-modal-textarea" id="modalLinks" placeholder="Add links..." onchange="autoSaveTask('${task.id}')">${task.links.map(l => escapeHtml(l)).join('\n')}</textarea>
+                        </div>
+                        <div class="task-modal-edit-field">
+                            <label class="task-modal-label">Time Block</label>
+                            <select class="task-modal-select" id="modalTimeblock" onchange="autoSaveTask('${task.id}')">
+                                <option value="">None</option>
+                                ${blockOptions}
+                            </select>
+                        </div>
+                        <div class="task-modal-section">
+                            <label class="task-modal-toggle ${task.waitingOn ? 'active' : ''}" onclick="toggleWaitingFromModal('${task.id}')">
+                                <input type="checkbox" ${task.waitingOn ? 'checked' : ''} onclick="event.stopPropagation()">
+                                <span>Waiting on someone</span>
+                            </label>
+                        </div>
+                    </div>
+                    <div class="task-modal-footer">
+                        <button class="task-modal-btn danger" onclick="deleteTaskFromModal('${task.id}')">Delete</button>
+                        <button class="task-modal-btn primary" onclick="saveAndCloseModal('${task.id}')">Done</button>
+                    </div>
+                </div>
+            `;
+
+            document.body.appendChild(modal);
+            modal.addEventListener('click', (e) => { if (e.target === modal) saveAndCloseModal(task.id); });
+            document.addEventListener('keydown', handleModalEscape);
+        }
+
+        function updateModalSubtags(taskId) {
+            const catId = document.getElementById('modalCategory').value;
+            const field = document.getElementById('modalSubtagField');
+            const select = document.getElementById('modalSubtag');
+            if (!catId) { field.style.display = 'none'; return; }
+            const subtags = getSubtagsForCategory(catId);
+            if (subtags.length === 0) { field.style.display = 'none'; return; }
+            field.style.display = '';
+            select.innerHTML = '<option value="">None</option>' + subtags.map(s => `<option value="${s}">${s}</option>`).join('');
+        }
+
+        function autoSaveTask(taskId) {
+            const task = tasks.find(t => t.id === taskId);
+            if (!task) return;
+            const g = id => document.getElementById(id);
+            if (g('modalTitle')) task.title = g('modalTitle').value.trim() || task.title;
+            if (g('modalNotes')) task.notes = g('modalNotes').value.trim();
+            if (g('modalCategory')) task.category = g('modalCategory').value || null;
+            if (g('modalSubtag')) task.subtag = g('modalSubtag').value || null;
+            if (g('modalTimeblock')) task.timeBlock = g('modalTimeblock').value || null;
+            if (g('modalLinks')) {
+                const v = g('modalLinks').value.trim();
+                task.links = v ? v.split('\n').filter(l => l.trim()) : [];
+            }
+            saveTasks();
+        }
+
+        function saveAndCloseModal(taskId) {
+            autoSaveTask(taskId);
+            closeTaskModal();
+            renderCurrentView();
+        }
+
+        function handleModalEscape(e) {
+            if (e.key === 'Escape') {
+                const modal = document.getElementById('taskModal');
+                if (modal && modal.dataset.taskId) saveAndCloseModal(modal.dataset.taskId);
+                else closeTaskModal();
+            }
+        }
+
+        function closeTaskModal() {
+            const modal = document.getElementById('taskModal');
+            if (modal) { modal.remove(); document.removeEventListener('keydown', handleModalEscape); }
+        }
+
+        function toggleCompleteFromModal(taskId, event) {
+            event.stopPropagation();
+            const task = tasks.find(t => t.id === taskId);
+            if (task) {
+                task.completed = !task.completed;
+                task.completedAt = task.completed ? new Date().toISOString() : null;
+                task.status = task.completed ? 'done' : 'todo';
+                if (task.completed) {
+                    const box = event.currentTarget.querySelector('.task-modal-checkbox-box');
+                    if (box) createConfetti(box);
+                }
+                saveTasks();
+                renderTaskModal(task);
+                renderCurrentView();
+            }
+        }
+
+        function toggleWaitingFromModal(taskId) {
+            const task = tasks.find(t => t.id === taskId);
+            if (task) {
+                task.waitingOn = !task.waitingOn;
+                saveTasks();
+                renderTaskModal(task);
+                renderCurrentView();
+            }
+        }
+
+        function deleteTaskFromModal(taskId) {
+            tasks = tasks.filter(t => t.id !== taskId);
+            saveTasks();
+            closeTaskModal();
+            renderCurrentView();
+        }
+
+        function toggleComplete(id, event) {
+            event.stopPropagation();
+            const task = tasks.find(t => t.id === id);
+            if (task) {
+                task.completed = !task.completed;
+                task.completedAt = task.completed ? new Date().toISOString() : null;
+                task.status = task.completed ? 'done' : 'todo';
+                if (task.completed) createConfetti(event.target);
+                saveTasks();
+                renderCurrentView();
+            }
+        }
+
+        // ===================== SUBTAG MANAGER =====================
+        function showSubtagManager() {
+            closeTaskModal();
+            const modal = document.createElement('div');
+            modal.className = 'task-modal';
+            modal.id = 'taskModal';
+
+            let html = '';
+            CATEGORIES.forEach(cat => {
+                const subtags = getSubtagsForCategory(cat.id);
+                html += `<div class="subtag-category">
+                    <div class="subtag-category-header">
+                        <span class="subtag-category-dot ${cat.id}"></span>
+                        <span class="subtag-category-label">${cat.label}</span>
+                    </div>
+                    <div class="subtag-list">
+                        ${subtags.length > 0 ? subtags.map(s => `<span class="subtag-chip">${escapeHtml(s)}<button class="subtag-chip-remove" onclick="removeSubtag('${cat.id}','${escapeHtml(s)}')">&times;</button></span>`).join('') : '<span class="no-subtags">No subtags</span>'}
+                    </div>
+                    <div class="subtag-add-form">
+                        <input type="text" class="subtag-add-input" id="newSubtag-${cat.id}" placeholder="Add subtag..." onkeydown="if(event.key==='Enter'){event.preventDefault();addSubtag('${cat.id}')}">
+                        <button class="subtag-add-btn" onclick="addSubtag('${cat.id}')">Add</button>
+                    </div>
+                </div>`;
+            });
+
+            modal.innerHTML = `<div class="task-modal-content">
+                <div class="task-modal-header"><h3 class="task-modal-title">Manage Subtags</h3><button class="task-modal-close" onclick="closeTaskModal()">&times;</button></div>
+                <div class="subtag-manager">${html}</div>
+                <div class="task-modal-footer"><button class="task-modal-btn primary" onclick="closeTaskModal()">Done</button></div>
+            </div>`;
+
+            document.body.appendChild(modal);
+            modal.addEventListener('click', (e) => { if (e.target === modal) closeTaskModal(); });
+            document.addEventListener('keydown', handleModalEscape);
+        }
+
+        function addSubtag(catId) {
+            const input = document.getElementById('newSubtag-' + catId);
+            const val = input.value.trim();
+            if (!val) return;
+            if (!customSubtags[catId]) customSubtags[catId] = [];
+            if (!getSubtagsForCategory(catId).includes(val)) { customSubtags[catId].push(val); saveCustomSubtags(); }
+            input.value = '';
+            showSubtagManager();
+        }
+
+        function removeSubtag(catId, subtag) {
+            const cat = CATEGORIES.find(c => c.id === catId);
+            if (cat && cat.subtags.includes(subtag)) { alert('Cannot remove default subtags'); return; }
+            if (customSubtags[catId]) { customSubtags[catId] = customSubtags[catId].filter(s => s !== subtag); saveCustomSubtags(); showSubtagManager(); }
+        }
+
+        // ===================== CALENDAR VIEW =====================
+        function renderCalendarView() {
+            const el = document.getElementById('calendarView');
+            el.style.display = 'block';
+            const active = tasks.filter(t => !t.completed && t.timeBlock);
+
+            let html = '<div class="calendar-view">';
+            html += '<div class="calendar-header corner"></div>';
+            DAYS.forEach(day => { html += `<div class="calendar-header">${day}</div>`; });
+
+            TIME_BLOCKS.forEach(block => {
+                html += `<div class="calendar-row-label"><span>${block.label}</span><span class="time">${block.time}</span></div>`;
+                for (let di = 0; di < 7; di++) {
+                    const dayNum = di === 6 ? 0 : di + 1;
+                    if (block.days.includes(dayNum)) {
+                        const bt = active.filter(t => t.timeBlock === block.id);
+                        const cellId = `cell-${block.id}-${di}`;
+                        html += `<div class="calendar-cell ${bt.length > 0 ? 'has-tasks' : ''}" id="${cellId}" onclick="toggleCalendarCell('${cellId}')">
+                            <div class="calendar-cell-content">${block.label}</div>
+                            <div class="calendar-cell-count">${bt.length} task${bt.length !== 1 ? 's' : ''}</div>
+                            <div class="calendar-tasks">
+                                ${bt.length > 0 ? bt.map(t => `<div class="calendar-task ${t.category || ''}" onclick="showTaskModal('${t.id}',event)">${escapeHtml(t.title)}</div>`).join('') : '<div class="calendar-task empty">No tasks</div>'}
+                            </div>
+                        </div>`;
+                    } else {
+                        html += '<div class="calendar-cell inactive"></div>';
+                    }
+                }
+            });
+
+            html += '</div>';
+            el.innerHTML = html;
+        }
+
+        function toggleCalendarCell(cellId) {
+            const cell = document.getElementById(cellId);
+            if (cell.classList.contains('inactive')) return;
+            if (expandedCalendarCell && expandedCalendarCell !== cellId) {
+                document.getElementById(expandedCalendarCell)?.classList.remove('expanded');
+            }
+            cell.classList.toggle('expanded');
+            expandedCalendarCell = cell.classList.contains('expanded') ? cellId : null;
+        }
+
+        // ===================== KANBAN VIEW =====================
+        function renderKanbanView() {
+            const el = document.getElementById('kanbanView');
+            el.style.display = 'block';
+
+            let html = '<div class="kanban-view">';
+            KANBAN_COLUMNS.forEach(col => {
+                const ct = tasks.filter(t => t.status === col.id);
+                html += `<div class="kanban-column" data-status="${col.id}" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event,'${col.id}')">
+                    <div class="kanban-header"><span class="kanban-title">${col.label}</span><span class="kanban-count">${ct.length}</span></div>
+                    <div class="kanban-cards">
+                        ${ct.length > 0 ? ct.map(t => renderKanbanCard(t)).join('') : '<div class="kanban-empty">No tasks</div>'}
+                    </div>
+                </div>`;
+            });
+            html += '</div>';
+            el.innerHTML = html;
+        }
+
+        function renderKanbanCard(task) {
+            const catTag = task.category ? `<span class="kanban-tag ${task.category}">${CATEGORIES.find(c => c.id === task.category)?.label || task.category}</span>` : '';
+            const subTag = task.subtag ? `<span class="kanban-tag subtag">${escapeHtml(task.subtag)}</span>` : '';
+            const blockTag = task.timeBlock ? `<span class="kanban-tag">${TIME_BLOCKS.find(t => t.id === task.timeBlock)?.label || task.timeBlock}</span>` : '';
+            return `<div class="kanban-card ${task.waitingOn ? 'waiting' : ''}" draggable="true" data-task-id="${task.id}" ondragstart="handleDragStart(event)" ondragend="handleDragEnd(event)" onclick="showTaskModal('${task.id}',event)">
+                <div class="kanban-card-title">${escapeHtml(task.title)}</div>
+                <div class="kanban-card-tags">${catTag}${subTag}${blockTag}</div>
+            </div>`;
+        }
+
+        function handleDragStart(e) { e.target.classList.add('dragging'); e.dataTransfer.setData('text/plain', e.target.dataset.taskId); e.dataTransfer.effectAllowed = 'move'; }
+        function handleDragEnd(e) { e.target.classList.remove('dragging'); }
+        function handleDragOver(e) { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; e.currentTarget.classList.add('drag-over'); }
+        function handleDragLeave(e) { e.currentTarget.classList.remove('drag-over'); }
+        function handleDrop(e, newStatus) {
+            e.preventDefault(); e.currentTarget.classList.remove('drag-over');
+            const task = tasks.find(t => t.id === e.dataTransfer.getData('text/plain'));
+            if (task && task.status !== newStatus) {
+                task.status = newStatus;
+                task.completed = newStatus === 'done';
+                task.completedAt = newStatus === 'done' ? new Date().toISOString() : null;
+                saveTasks(); renderCurrentView();
+            }
+        }
+
+        // ===================== SHARED RENDER =====================
+        function renderTaskItem(task, isCompleted = false) {
+            const catTag = task.category ? `<span class="task-tag ${task.category}">${CATEGORIES.find(c => c.id === task.category)?.label || ''}</span>` : '';
+            const subTag = task.subtag ? `<span class="task-tag subtag">${escapeHtml(task.subtag)}</span>` : '';
+            const blockTag = task.timeBlock ? `<span class="task-tag">${TIME_BLOCKS.find(t => t.id === task.timeBlock)?.label || ''}</span>` : '';
+            const waitClass = task.waitingOn && !isCompleted ? 'waiting-indicator' : '';
+
+            return `<div class="task-item ${isCompleted ? 'completed' : ''} ${waitClass}" data-task-id="${task.id}">
+                <div class="task-main" onclick="showTaskModal('${task.id}',event)">
+                    <div class="task-checkbox ${isCompleted ? 'checked' : ''}" onclick="toggleComplete('${task.id}',event)"></div>
+                    <div class="task-content">
+                        <div class="task-title">${escapeHtml(task.title)}</div>
+                        <div class="task-meta">${catTag}${subTag}${blockTag}</div>
+                    </div>
+                </div>
+            </div>`;
+        }
+
+        // ===================== UTILITIES =====================
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function createConfetti(element) {
+            const rect = element.getBoundingClientRect();
+            const container = document.createElement('div');
+            container.className = 'confetti';
+            container.style.left = rect.left + rect.width / 2 + 'px';
+            container.style.top = rect.top + 'px';
+            document.body.appendChild(container);
+            const colors = ['#6366f1', '#22c55e', '#f59e0b', '#ec4899', '#3b82f6', '#8b5cf6'];
+            for (let i = 0; i < 12; i++) {
+                const p = document.createElement('div');
+                p.className = 'confetti-piece';
+                p.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                p.style.left = (Math.random() - 0.5) * 100 + 'px';
+                p.style.animationDuration = (0.8 + Math.random() * 0.4) + 's';
+                p.style.borderRadius = Math.random() > 0.5 ? '50%' : '2px';
+                container.appendChild(p);
+            }
+            setTimeout(() => container.remove(), 1500);
+        }
+        // ===================== LEARNING ROADMAP =====================
+        const DEFAULT_ROADMAP = "# Learning Roadmap\n\n> From personal tool to production product to teaching others.\n\n---\n\n## My Three Goals\n\n### 1. Personal Daily Agent\nBuild an AI assistant that helps me:\n- Manage calendars and tasks intelligently\n- Feel productive AND grounded\n- Have space to REST (protect boundaries)\n- Understand the code structure (objects, logic, data flow)\n\n### 2. Learn AI-Assisted Building\n- Learn how to build apps using Claude Code\n- Document best practices that help me as a builder\n- Create shareable learnings for others (PMs, teams, companies)\n\n### 3. Personal > Production > Multi-User Evolution\n- **Stage 1:** Production experience I can safely use (phone + computer)\n- **Stage 2:** Connect to tools/APIs (Claude API, Gmail, Google Calendar)\n- **Stage 3:** Offer to others (learn auth, tenancy, onboarding)\n\n---\n\n## Stage 1: Personal Production (Weeks 1-2)\n\n*Target: 6-10 hours of building*\n\n### Milestones\n- [ ] Core features working (Home, Calendar, Kanban, Tasks)\n- [ ] Data persistence (Supabase backend)\n- [ ] Deploy to web (Vercel - accessible anywhere)\n- [ ] Google Calendar integration (read real calendar)\n- [ ] Mobile PWA (install on phone)\n- [ ] Voice capture (Wispr Flow > Claude Project > App)\n\n### Technical Concepts to Learn\n| Concept | Why It Matters |\n|---------|---------------|\n| APIs and authentication | How apps talk to each other |\n| Frontend vs. backend | What runs in browser vs. server |\n| Database design | How data is structured and stored |\n| Deployment pipelines | How code becomes a live website |\n| OAuth flows | How Google Calendar shares data securely |\n\n---\n\n## Stage 2: Progressive Integrations (Weeks 2-4)\n\n*Target: 2-3 hours per integration*\n\n### Phase A - Read-Only Integrations\n- [ ] Google Calendar API (pull real calendar)\n- [ ] Weather API (real weather on home screen)\n- [ ] Claude API (smarter task categorization)\n\n### Phase B - Two-Way Integrations\n- [ ] Gmail API (read emails, extract tasks)\n- [ ] Google Calendar Write (create events from tasks)\n- [ ] Slack (send task reminders)\n\n### Technical Concepts to Learn\n| Concept | Why It Matters |\n|---------|---------------|\n| API keys and environment variables | Keeping secrets safe |\n| Rate limiting and quotas | Respecting API boundaries |\n| Webhook patterns | Getting notified when things change |\n| Error handling and retries | What happens when things fail |\n| Data synchronization | Keeping two systems in agreement |\n\n---\n\n## Stage 3: Multi-User Product (Weeks 4-8)\n\n*Target: 20-40 hours total*\n\n### Week 4-5: Foundation\n- [ ] User authentication (email/password)\n- [ ] Multi-tenancy (separate user data)\n- [ ] User settings/preferences\n- [ ] Simple onboarding flow\n\n### Week 6: Polish\n- [ ] Invite system (5-10 friends)\n- [ ] Help documentation\n- [ ] Bug fixes from real users\n- [ ] Performance optimization\n\n### Week 7-8: Product Launch\n- [ ] Payment integration (Stripe - optional)\n- [ ] Marketing landing page\n- [ ] Analytics dashboard\n- [ ] Feedback system\n\n### Technical Concepts to Learn\n| Concept | Why It Matters |\n|---------|---------------|\n| Authentication vs. authorization | Who you are vs. what you can do |\n| Database schema for multi-user | Each user sees only their data |\n| Payment processing | Turning a tool into a business |\n| User onboarding patterns | First impressions matter |\n| Product analytics | Understanding how people use it |\n| Customer support tooling | Helping users when things break |\n\n---\n\n## Best Practices (Captured Along the Way)\n\n### 1. Start with Context Files\nTeach AI your domain before building. Example: calendar-context.md gave Claude the vocabulary of time blocks, categories, and workflow before a single line of code was written.\n\n### 2. Iterate in Public\nDon't wait for \"perfect.\" Ship v1 and improve. The first version of this app was a plain task list. Each conversation added a layer.\n\n### 3. Describe Feelings, Not Implementation\n\"I want it to feel fluid\" works better than \"Use this specific animation.\" Let the tool translate intent into code.\n\n### 4. Build for Your Real Workflow\nYour actual calendar and categories (Lott House, Berene House, Subaru) make this useful on day one. Generic tools stay generic forever.\n\n### 5. Ask \"Why?\" When Stuck\nUnderstanding beats blind copying. When something breaks, understanding *why* it broke teaches more than just fixing it.\n\n### 6. Conversational Building\nDescribe what you want, Claude builds it. Iterate based on what you see and feel. The conversation *is* the development process.\n\n### 7. Progressive Enhancement\nStart simple. Add complexity gradually. Each iteration teaches more. This app went from a static HTML list to a conversational AI dashboard in a handful of sessions.\n\n---\n\n## What I Can Teach Others\n\n### For Other PMs\n- \"How to Build Your First App Without Coding\"\n- \"Product Thinking Applied to AI Tools\"\n- \"From Idea to Production in 30 Days\"\n\n### For My Teams\n- \"How We Use AI to Build Faster\"\n- \"Prototype to Production Patterns\"\n- \"When to Build vs. Buy with AI\"\n\n### For My Company\n- Internal tools built in hours, not months\n- Everyone can prototype ideas\n- Reduce dependency on eng for exploration\n\n---\n\n## Learning Arc Timeline\n\nWeek 1-2    Personal app working\n              Understand: frontend, databases, deployment\n\nWeek 2-4    Integrations adding superpowers\n              Understand: APIs, authentication, data flow\n\nWeek 4-8    Multi-user product\n              Understand: scaling, business logic, user management\n\nMonth 3+    Teaching others\n              Document the journey\n\n---\n\n## Insights Captured\n\n*Add learnings here as I go.*\n\n### January 25, 2026 - First Build Sessions\n- Built a complete task app (Home, Calendar, Kanban, Tasks) in a single HTML file with no dependencies\n- Learned: describing the *feeling* of what I want produces better results than specifying technical details\n- Learned: iterating in small steps (list > calendar > kanban > chat) keeps momentum and lets me steer\n- Learned: giving Claude context about my real life (time blocks, house names, categories) makes the tool immediately personal\n- The conversational Home tab came from asking for what I *wished* existed, not what I thought was possible\n\n### [Date] -\n-\n\n### [Date] -\n-\n\n---\n\n## Current Status\n\n| | |\n|---|---|\n| **Stage** | Stage 1 - Personal Production |\n| **Last Updated** | January 25, 2026 |\n| **What's Working** | Home (chat + greeting), Calendar, Kanban (drag & drop), Tasks (categorized with subtags), smart auto-categorization, waiting-on-someone indicator, subtag management |\n| **Next Milestone** | Supabase backend for data persistence |\n| **Hours Invested** | ~3-4 |\n";
+
+        function loadRoadmap() {
+            const stored = localStorage.getItem('learningRoadmap');
+            if (stored) {
+                try { return JSON.parse(stored); } catch(e) { /* fall through */ }
+            }
+            const data = { markdown: DEFAULT_ROADMAP, lastUpdated: new Date().toISOString() };
+            localStorage.setItem('learningRoadmap', JSON.stringify(data));
+            return data;
+        }
+
+        function saveRoadmap(data) {
+            data.lastUpdated = new Date().toISOString();
+            localStorage.setItem('learningRoadmap', JSON.stringify(data));
+        }
+
+        let roadmapSourceMode = false;
+
+        function showRoadmap() {
+            closeTaskModal();
+            roadmapSourceMode = false;
+            renderRoadmapModal();
+        }
+
+        function renderRoadmapModal() {
+            closeTaskModal();
+            const data = loadRoadmap();
+            const modal = document.createElement('div');
+            modal.className = 'task-modal roadmap-modal';
+            modal.id = 'taskModal';
+
+            modal.innerHTML = `
+                <div class="task-modal-content" style="max-width:600px;">
+                    <div class="roadmap-header">
+                        <h3 class="task-modal-title">Learning Roadmap</h3>
+                        <div style="display:flex; gap:0.5rem; align-items:center;">
+                            <button class="roadmap-toggle" onclick="toggleRoadmapView()">${roadmapSourceMode ? 'View structured' : 'View source'}</button>
+                            <button class="task-modal-close" onclick="closeTaskModal()">&times;</button>
+                        </div>
+                    </div>
+                    <div class="roadmap-body" id="roadmapBody">
+                        ${roadmapSourceMode ? renderRoadmapSource(data) : renderRoadmapStructured(data)}
+                    </div>
+                </div>
+            `;
+
+            document.body.appendChild(modal);
+            modal.addEventListener('click', (e) => { if (e.target === modal) closeTaskModal(); });
+            document.addEventListener('keydown', handleModalEscape);
+
+            if (roadmapSourceMode) {
+                const textarea = document.getElementById('roadmapSourceText');
+                if (textarea) {
+                    textarea.addEventListener('input', () => {
+                        const d = loadRoadmap();
+                        d.markdown = textarea.value;
+                        saveRoadmap(d);
+                    });
+                }
+            }
+        }
+
+        function toggleRoadmapView() {
+            roadmapSourceMode = !roadmapSourceMode;
+            renderRoadmapModal();
+        }
+
+        function renderRoadmapSource(data) {
+            return '<textarea class="roadmap-source" id="roadmapSourceText">' + escapeHtml(data.markdown) + '</textarea>';
+        }
+
+        function renderRoadmapStructured(data) {
+            const sections = parseRoadmapSections(data.markdown);
+            return sections.map((section, i) => renderRoadmapSectionHtml(section, i)).join('');
+        }
+
+        // ---- Markdown Parser ----
+        function parseRoadmapSections(markdown) {
+            const lines = markdown.split('\n');
+            const sections = [];
+            let current = null;
+            let inCode = false;
+
+            for (const line of lines) {
+                if (line.trim().startsWith('```')) {
+                    inCode = !inCode;
+                    if (current) current.lines.push(line);
+                    continue;
+                }
+                if (inCode) { if (current) current.lines.push(line); continue; }
+
+                if (line.startsWith('## ')) {
+                    current = { title: line.substring(3), lines: [] };
+                    sections.push(current);
+                } else if (line.startsWith('# ') && !current) {
+                    current = { title: line.substring(2), lines: [], isTitle: true };
+                    sections.push(current);
+                } else if (current) {
+                    current.lines.push(line);
+                } else {
+                    // Lines before any header
+                    if (sections.length === 0 || !sections[0].isIntro) {
+                        current = { title: 'Introduction', lines: [line], isIntro: true };
+                        sections.unshift(current);
+                    } else {
+                        sections[0].lines.push(line);
+                    }
+                }
+            }
+            return sections;
+        }
+
+        function renderRoadmapSectionHtml(section, index) {
+            const isInsights = section.title.includes('Insights Captured');
+            const isStatus = section.title.includes('Current Status');
+
+            if (section.isTitle) {
+                return '<div style="text-align:center; margin-bottom:1.5rem;">' +
+                    '<h2 style="font-size:1.25rem; font-weight:600; margin-bottom:0.5rem;">' + escapeHtml(section.title) + '</h2>' +
+                    renderRoadmapLines(section.lines) + '</div>';
+            }
+
+            let bodyHtml;
+            if (isInsights) bodyHtml = renderInsightsSection(section.lines);
+            else if (isStatus) bodyHtml = renderStatusSection(section.lines);
+            else bodyHtml = renderRoadmapLines(section.lines);
+
+            return '<div class="roadmap-section" id="roadmap-section-' + index + '">' +
+                '<div class="roadmap-section-header" onclick="toggleRoadmapSection(' + index + ')">' +
+                    '<span>' + escapeHtml(section.title) + '</span>' +
+                    '<span class="roadmap-section-toggle">&#9660;</span>' +
+                '</div>' +
+                '<div class="roadmap-section-body" style="max-height:3000px;">' + bodyHtml + '</div>' +
+            '</div>';
+        }
+
+        function toggleRoadmapSection(index) {
+            const el = document.getElementById('roadmap-section-' + index);
+            if (el) el.classList.toggle('collapsed');
+        }
+
+        function renderRoadmapLines(lines) {
+            let html = '';
+            let i = 0;
+            let inCode = false;
+            let codeContent = '';
+
+            while (i < lines.length) {
+                const line = lines[i];
+
+                // Code blocks
+                if (line.trim().startsWith('```')) {
+                    if (inCode) {
+                        html += '<pre style="background:var(--bg-tertiary); padding:0.75rem; border-radius:0.375rem; font-size:0.8rem; overflow-x:auto; margin:0.5rem 0; white-space:pre-wrap;"><code>' + escapeHtml(codeContent.trim()) + '</code></pre>';
+                        codeContent = '';
+                        inCode = false;
+                    } else {
+                        inCode = true;
+                    }
+                    i++; continue;
+                }
+                if (inCode) { codeContent += line + '\n'; i++; continue; }
+
+                // Table: consecutive lines starting with |
+                if (line.trim().startsWith('|')) {
+                    const tableLines = [];
+                    while (i < lines.length && lines[i].trim().startsWith('|')) {
+                        tableLines.push(lines[i]);
+                        i++;
+                    }
+                    html += renderRoadmapTable(tableLines);
+                    continue;
+                }
+
+                // Horizontal rule
+                if (line.trim() === '---') { i++; continue; }
+
+                // ### headings
+                if (line.startsWith('### ')) {
+                    html += '<div class="roadmap-h3">' + formatInlineMd(line.substring(4)) + '</div>';
+                    i++; continue;
+                }
+
+                // Checkboxes
+                if (line.trim().startsWith('- [ ]') || line.trim().startsWith('- [x]')) {
+                    const checked = line.trim().startsWith('- [x]');
+                    const text = line.trim().replace(/^- \[[ x]\]\s*/, '');
+                    html += '<label class="roadmap-checkbox ' + (checked ? 'checked' : '') + '">' +
+                        '<input type="checkbox" ' + (checked ? 'checked' : '') + ' onchange="toggleRoadmapCheckbox(this)">' +
+                        '<span>' + formatInlineMd(text) + '</span></label>';
+                    i++; continue;
+                }
+
+                // Blockquote
+                if (line.trim().startsWith('> ')) {
+                    html += '<div class="roadmap-blockquote">' + formatInlineMd(line.trim().substring(2)) + '</div>';
+                    i++; continue;
+                }
+
+                // List items
+                if (line.trim().startsWith('- ')) {
+                    html += '<div class="roadmap-list-item">' + formatInlineMd(line.trim().substring(2)) + '</div>';
+                    i++; continue;
+                }
+
+                // Italic emphasis line
+                if (line.trim().startsWith('*') && line.trim().endsWith('*') && !line.trim().startsWith('**')) {
+                    html += '<div class="roadmap-text"><em>' + formatInlineMd(line.trim().slice(1, -1)) + '</em></div>';
+                    i++; continue;
+                }
+
+                // Empty line
+                if (line.trim() === '') { i++; continue; }
+
+                // Regular text
+                html += '<div class="roadmap-text">' + formatInlineMd(line) + '</div>';
+                i++;
+            }
+            return html;
+        }
+
+        function formatInlineMd(text) {
+            text = escapeHtml(text);
+            text = text.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+            text = text.replace(/\*(.+?)\*/g, '<em>$1</em>');
+            text = text.replace(/`(.+?)`/g, '<code class="roadmap-code">$1</code>');
+            return text;
+        }
+
+        function renderRoadmapTable(tableLines) {
+            if (tableLines.length < 2) return '';
+            const parseRow = (line) => line.split('|').map(c => c.trim()).filter(c => c !== '');
+            const headers = parseRow(tableLines[0]);
+            const startIdx = (tableLines.length > 1 && tableLines[1].includes('---')) ? 2 : 1;
+
+            let html = '<table class="roadmap-table"><thead><tr>';
+            headers.forEach(h => { html += '<th>' + formatInlineMd(h) + '</th>'; });
+            html += '</tr></thead><tbody>';
+            for (let i = startIdx; i < tableLines.length; i++) {
+                const cells = parseRow(tableLines[i]);
+                if (cells.length === 0) continue;
+                html += '<tr>';
+                cells.forEach(c => { html += '<td>' + formatInlineMd(c) + '</td>'; });
+                html += '</tr>';
+            }
+            html += '</tbody></table>';
+            return html;
+        }
+
+        // ---- Insights Section ----
+        function renderInsightsSection(lines) {
+            let html = renderRoadmapLines(lines);
+            html += '<div id="roadmapInsightFormArea">' +
+                '<button class="roadmap-toggle" onclick="showInsightForm()" style="margin-top:0.75rem;">+ Add Insight</button>' +
+            '</div>';
+            return html;
+        }
+
+        function showInsightForm() {
+            const area = document.getElementById('roadmapInsightFormArea');
+            if (!area) return;
+            const today = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+            area.innerHTML = '<div class="roadmap-insight-form">' +
+                '<div style="font-size:0.8rem; color:var(--text-secondary); margin-bottom:0.5rem;">' + today + '</div>' +
+                '<textarea id="insightText" placeholder="What did you learn? (one bullet per line)"></textarea>' +
+                '<div class="roadmap-insight-form-actions">' +
+                    '<button class="roadmap-form-btn secondary" onclick="cancelInsightForm()">Cancel</button>' +
+                    '<button class="roadmap-form-btn primary" onclick="saveInsight()">Save</button>' +
+                '</div></div>';
+            document.getElementById('insightText').focus();
+        }
+
+        function cancelInsightForm() {
+            const area = document.getElementById('roadmapInsightFormArea');
+            if (area) {
+                area.innerHTML = '<button class="roadmap-toggle" onclick="showInsightForm()" style="margin-top:0.75rem;">+ Add Insight</button>';
+            }
+        }
+
+        function saveInsight() {
+            const text = document.getElementById('insightText').value.trim();
+            if (!text) return;
+            addInsightToRoadmap(text);
+            renderRoadmapModal();
+        }
+
+        function addInsightToRoadmap(text) {
+            const data = loadRoadmap();
+            const today = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+            const bullets = text.split('\n').map(line => {
+                line = line.trim();
+                if (!line) return '';
+                if (!line.startsWith('- ')) line = '- ' + line;
+                return line;
+            }).filter(Boolean).join('\n');
+
+            const insightHeader = '### ' + today;
+
+            if (data.markdown.includes(insightHeader)) {
+                const idx = data.markdown.indexOf(insightHeader);
+                const nextH3 = data.markdown.indexOf('\n### ', idx + insightHeader.length);
+                const nextH2 = data.markdown.indexOf('\n## ', idx);
+                const endIdx = Math.min(
+                    nextH3 > -1 ? nextH3 : Infinity,
+                    nextH2 > -1 ? nextH2 : Infinity,
+                    data.markdown.length
+                );
+                const before = data.markdown.substring(0, endIdx).trimEnd();
+                const after = data.markdown.substring(endIdx);
+                data.markdown = before + '\n' + bullets + '\n' + after;
+            } else {
+                const templateIdx = data.markdown.indexOf('### [Date]');
+                if (templateIdx > -1) {
+                    data.markdown = data.markdown.substring(0, templateIdx) +
+                        insightHeader + '\n' + bullets + '\n\n' +
+                        data.markdown.substring(templateIdx);
+                } else {
+                    const insightsIdx = data.markdown.indexOf('## Insights Captured');
+                    if (insightsIdx > -1) {
+                        const nextSection = data.markdown.indexOf('\n## ', insightsIdx + 1);
+                        const insertIdx = nextSection > -1 ? nextSection : data.markdown.length;
+                        data.markdown = data.markdown.substring(0, insertIdx) +
+                            '\n' + insightHeader + '\n' + bullets + '\n' +
+                            data.markdown.substring(insertIdx);
+                    }
+                }
+            }
+            saveRoadmap(data);
+        }
+
+        // ---- Status Section ----
+        function renderStatusSection(lines) {
+            let stage = '', lastUpdated = '', whatsWorking = '', nextMilestone = '', hoursInvested = '';
+            for (const line of lines) {
+                if (line.includes('**Stage**')) stage = extractTableValue(line);
+                else if (line.includes('**Last Updated**')) lastUpdated = extractTableValue(line);
+                else if (line.includes("**What's Working**")) whatsWorking = extractTableValue(line);
+                else if (line.includes('**Next Milestone**')) nextMilestone = extractTableValue(line);
+                else if (line.includes('**Hours Invested**')) hoursInvested = extractTableValue(line);
+            }
+
+            return '<div class="roadmap-status-field">' +
+                '<label>Stage</label>' +
+                '<select onchange="updateRoadmapStatus(this, \'Stage\')">' +
+                    '<option ' + (stage.includes('Stage 1') ? 'selected' : '') + '>Stage 1 - Personal Production</option>' +
+                    '<option ' + (stage.includes('Stage 2') ? 'selected' : '') + '>Stage 2 - Progressive Integrations</option>' +
+                    '<option ' + (stage.includes('Stage 3') ? 'selected' : '') + '>Stage 3 - Multi-User Product</option>' +
+                '</select></div>' +
+            '<div class="roadmap-status-field"><label>Next Milestone</label>' +
+                '<input type="text" value="' + escapeHtml(nextMilestone) + '" onchange="updateRoadmapStatus(this, \'Next Milestone\')"></div>' +
+            '<div class="roadmap-status-field"><label>What\'s Working</label>' +
+                '<input type="text" value="' + escapeHtml(whatsWorking) + '" onchange="updateRoadmapStatus(this, \'What\\\'s Working\')"></div>' +
+            '<div class="roadmap-status-field"><label>Hours Invested</label>' +
+                '<input type="text" value="' + escapeHtml(hoursInvested) + '" onchange="updateRoadmapStatus(this, \'Hours Invested\')"></div>' +
+            '<div class="roadmap-status-field"><label>Last Updated</label>' +
+                '<input type="text" value="' + escapeHtml(lastUpdated) + '" disabled style="opacity:0.6;"></div>';
+        }
+
+        function extractTableValue(line) {
+            const parts = line.split('|').map(c => c.trim()).filter(Boolean);
+            return parts.length > 1 ? parts[parts.length - 1] : (parts[0] || '');
+        }
+
+        function updateRoadmapStatus(element, field) {
+            const data = loadRoadmap();
+            const value = element.value;
+            const fieldMap = {
+                'Stage': '**Stage**',
+                'Next Milestone': '**Next Milestone**',
+                "What's Working": "**What's Working**",
+                'Hours Invested': '**Hours Invested**'
+            };
+            const pattern = fieldMap[field];
+            if (!pattern) return;
+
+            const lines = data.markdown.split('\n');
+            for (let i = 0; i < lines.length; i++) {
+                if (lines[i].includes(pattern)) {
+                    lines[i] = '| ' + pattern + ' | ' + value + ' |';
+                    break;
+                }
+            }
+            // Update last updated date
+            const today = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+            for (let i = 0; i < lines.length; i++) {
+                if (lines[i].includes('**Last Updated**')) {
+                    lines[i] = '| **Last Updated** | ' + today + ' |';
+                    break;
+                }
+            }
+            data.markdown = lines.join('\n');
+            saveRoadmap(data);
+        }
+
+        // ---- Checkbox Toggle ----
+        function toggleRoadmapCheckbox(checkbox) {
+            const label = checkbox.closest('.roadmap-checkbox');
+            const spanEl = label.querySelector('span');
+            const plainText = spanEl.textContent.trim();
+
+            const data = loadRoadmap();
+            const lines = data.markdown.split('\n');
+
+            for (let i = 0; i < lines.length; i++) {
+                const trimmed = lines[i].trim();
+                if ((trimmed.startsWith('- [ ]') || trimmed.startsWith('- [x]'))) {
+                    const lineText = trimmed.replace(/^- \[[ x]\]\s*/, '');
+                    if (lineText === plainText || (plainText.length > 10 && lineText.startsWith(plainText.substring(0, 30)))) {
+                        if (checkbox.checked) {
+                            lines[i] = lines[i].replace('- [ ]', '- [x]');
+                        } else {
+                            lines[i] = lines[i].replace('- [x]', '- [ ]');
+                        }
+                        break;
+                    }
+                }
+            }
+
+            data.markdown = lines.join('\n');
+            saveRoadmap(data);
+
+            if (checkbox.checked) label.classList.add('checked');
+            else label.classList.remove('checked');
+        }
+
+        // ---- Chat Integration ----
+        function handleRoadmapInsightChat(message) {
+            let insightText = message
+                .replace(/^(add insight|log insight|log learning|learned)[:\s]*/i, '')
+                .trim();
+
+            if (!insightText) {
+                return { type: 'text', content: 'What did you learn? Try: "log insight: [your learning here]"' };
+            }
+
+            addInsightToRoadmap(insightText);
+            return { type: 'text', content: 'Added to your Learning Roadmap insights:<br><em>' + escapeHtml(insightText) + '</em>' };
+        }
+
+        function handleRoadmapStatusChat(message) {
+            const data = loadRoadmap();
+            const lines = data.markdown.split('\n');
+            let stage = '', nextMilestone = '';
+            for (const line of lines) {
+                if (line.includes('**Stage**')) stage = extractTableValue(line);
+                if (line.includes('**Next Milestone**')) nextMilestone = extractTableValue(line);
+            }
+            return { type: 'text', content: '<strong>Roadmap Status</strong><br>Stage: ' + escapeHtml(stage) + '<br>Next Milestone: ' + escapeHtml(nextMilestone) + '<br><br><em>Open the roadmap (book icon) to edit details.</em>' };
+        }
+
+        function handleRoadmapCheckoffChat(message) {
+            const milestoneText = message
+                .replace(/^(check off|complete milestone|mark milestone)[:\s]*/i, '')
+                .trim()
+                .toLowerCase();
+
+            if (!milestoneText) {
+                return { type: 'text', content: 'Which milestone? Try: "check off [milestone name]"' };
+            }
+
+            const data = loadRoadmap();
+            const lines = data.markdown.split('\n');
+
+            for (let i = 0; i < lines.length; i++) {
+                const trimmed = lines[i].trim();
+                if (trimmed.startsWith('- [ ]') && trimmed.toLowerCase().includes(milestoneText)) {
+                    const text = trimmed.replace(/^- \[ \]\s*/, '');
+                    lines[i] = lines[i].replace('- [ ]', '- [x]');
+                    data.markdown = lines.join('\n');
+                    saveRoadmap(data);
+                    return { type: 'text', content: 'Checked off: <strong>' + escapeHtml(text) + '</strong>' };
+                }
+            }
+
+            return { type: 'text', content: 'Couldn\'t find an unchecked milestone matching "' + escapeHtml(milestoneText) + '".' };
+        }
+    </script>
+</body>
+</html>
