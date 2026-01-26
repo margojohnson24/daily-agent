@@ -2252,6 +2252,13 @@
             const active = tasks.filter(t => !t.completed && t.timeBlock);
 
             let html = '<div class="calendar-view">';
+            html += '<div id="calendarEventsPanel" style="grid-column: 1 / -1; padding: 0.75rem;">';
+            html += '<div style="display:flex; align-items:center; gap:10px; margin-bottom:10px;">';
+            html += '<button id="refreshCalendarBtn" type="button">Refresh calendar</button>';
+            html += '<span id="calendarStatus" style="opacity:0.8;"></span>';
+            html += '</div>';
+            html += '<div id="calendarEventsList"></div>';
+            html += '</div>';
             html += '<div class="calendar-header corner"></div>';
             DAYS.forEach(day => { html += `<div class="calendar-header">${day}</div>`; });
 
@@ -2277,6 +2284,18 @@
 
             html += '</div>';
             el.innerHTML = html;
+            
+            // Set up refresh button event listener
+            const btn = document.getElementById("refreshCalendarBtn");
+            if (btn) {
+                btn.onclick = () => {
+                    const statusEl = document.getElementById("calendarStatus");
+                    if (statusEl) {
+                        statusEl.textContent = "Refreshing…";
+                    }
+                    fetchCalendarEvents();
+                };
+            }
         }
 
         function toggleCalendarCell(cellId) {
@@ -2883,46 +2902,65 @@
           initGoogleAuth();
         });
         async function fetchCalendarEvents() {
-  const token = localStorage.getItem("googleAccessToken");
-  if (!token) {
-    console.warn("No googleAccessToken in localStorage yet.");
-    return;
-  }
+            const statusEl = document.getElementById("calendarStatus");
+            const token = localStorage.getItem("googleAccessToken");
+            if (!token) {
+                if (statusEl) {
+                    statusEl.textContent = "Not signed in";
+                }
+                console.warn("No googleAccessToken in localStorage yet.");
+                return;
+            }
 
-  const now = new Date().toISOString();
-  const maxResults = 20;
+            const now = new Date().toISOString();
+            const maxResults = 20;
 
-  const url =
-    "https://www.googleapis.com/calendar/v3/calendars/primary/events" +
-    `?timeMin=${encodeURIComponent(now)}` +
-    `&maxResults=${maxResults}` +
-    `&singleEvents=true` +
-    `&orderBy=startTime`;
+            const url =
+                "https://www.googleapis.com/calendar/v3/calendars/primary/events" +
+                `?timeMin=${encodeURIComponent(now)}` +
+                `&maxResults=${maxResults}` +
+                `&singleEvents=true` +
+                `&orderBy=startTime`;
 
-  const res = await fetch(url, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  });
+            try {
+                const res = await fetch(url, {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                });
 
-  if (!res.ok) {
-    const text = await res.text();
-    console.error("Calendar API error:", res.status, text);
-    return;
-  }
+                if (!res.ok) {
+                    const text = await res.text();
+                    console.error("Calendar API error:", res.status, text);
+                    if (statusEl) {
+                        statusEl.textContent = "Error fetching events";
+                    }
+                    return;
+                }
 
-  const data = await res.json();
-  console.log("Fetched events:", data.items);
+                const data = await res.json();
+                console.log("Fetched events:", data.items);
 
-  // Optional: show a cleaner preview
-  console.table(
-    (data.items || []).map((e) => ({
-      title: e.summary || "(no title)",
-      start: e.start?.dateTime || e.start?.date,
-      end: e.end?.dateTime || e.end?.date,
-    }))
-  );
-}      
+                // Optional: show a cleaner preview
+                console.table(
+                    (data.items || []).map((e) => ({
+                        title: e.summary || "(no title)",
+                        start: e.start?.dateTime || e.start?.date,
+                        end: e.end?.dateTime || e.end?.date,
+                    }))
+                );
+                
+                if (statusEl) {
+                    const count = data.items?.length || 0;
+                    statusEl.textContent = `Loaded ${count} event${count !== 1 ? 's' : ''}`;
+                }
+            } catch (error) {
+                console.error("Error fetching calendar events:", error);
+                if (statusEl) {
+                    statusEl.textContent = "Error fetching events";
+                }
+            }
+        }      
       </script>
       
 </body>
