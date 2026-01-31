@@ -2563,15 +2563,31 @@
 
         // ===================== INIT =====================
         document.addEventListener('DOMContentLoaded', async () => {
-            // Load tasks from Supabase (will fall back to localStorage if needed)
-            await loadTasksFromSupabase();
-            migrateTasks();
-            rolloverIncompleteTasks();
-            updateDateDisplay();
-            setupEventListeners();
-            renderCurrentView();
-            createAuroraParticles();
-            updateSignedInStatus();
+            try {
+                // Load tasks from Supabase (will fall back to localStorage if needed)
+                await loadTasksFromSupabase();
+            } catch (e) {
+                console.error('Error loading from Supabase:', e);
+                tasks = JSON.parse(localStorage.getItem('tasks')) || [];
+            }
+
+            try {
+                migrateTasks();
+                rolloverIncompleteTasks();
+                updateDateDisplay();
+                setupEventListeners();
+                renderCurrentView();
+                createAuroraParticles();
+                updateSignedInStatus();
+            } catch (e) {
+                console.error('Error during initialization:', e);
+                // Try to at least render something
+                try {
+                    renderCurrentView();
+                } catch (e2) {
+                    console.error('Failed to render view:', e2);
+                }
+            }
         });
 
         function updateDateDisplay() {
