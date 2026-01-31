@@ -2336,7 +2336,14 @@
         // ===================== SUPABASE =====================
         const SUPABASE_URL = 'https://wbvygcywemflmasqzmmg.supabase.co';
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndidnlnY3l3ZW1mbG1hc3F6bW1nIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk4OTEwMTAsImV4cCI6MjA4NTQ2NzAxMH0.rqbhRlKcJWKawjh62E7e7g_L95FX_b9W8lQMjRqZgRM';
-        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        let supabase = null;
+        try {
+            if (window.supabase && window.supabase.createClient) {
+                supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+            }
+        } catch (e) {
+            console.error('Failed to initialize Supabase:', e);
+        }
 
         // ===================== STATE =====================
         let tasks = [];
@@ -2391,7 +2398,7 @@
 
         // Save a single task to Supabase
         async function saveTaskToSupabase(task) {
-            if (!supabaseReady) return;
+            if (!supabase || !supabaseReady) return;
 
             const supabaseTask = {
                 id: task.id,
@@ -2423,7 +2430,7 @@
 
         // Delete a task from Supabase
         async function deleteTaskFromSupabase(taskId) {
-            if (!supabaseReady) return;
+            if (!supabase || !supabaseReady) return;
 
             const { error } = await supabase
                 .from('tasks')
@@ -2437,6 +2444,13 @@
 
         // Load all tasks from Supabase
         async function loadTasksFromSupabase() {
+            // If Supabase isn't available, fall back to localStorage
+            if (!supabase) {
+                console.log('Supabase not available, using localStorage');
+                tasks = JSON.parse(localStorage.getItem('tasks')) || [];
+                return;
+            }
+
             try {
                 const { data, error } = await supabase
                     .from('tasks')
