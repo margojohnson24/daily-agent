@@ -2479,14 +2479,16 @@
                                  lower.match(/^(i need to|i have to|i should|i must|i want to|gotta|gonna|need to|have to|should|must)\s/i) ||
                                  lower.match(/^[a-z]+ (mom|dad|doctor|dentist|boss|team|client)/i); // "call mom", "email boss"
 
-            // Weekly intention setting
-            if (lower.includes('my intention') || lower.includes('this week i want') || lower.includes('set intention') ||
-                lower.includes('my focus') || lower.includes('this week is about') || lower.match(/^intention:/i)) {
+            // Weekly intention setting (check BEFORE calendar to catch "weekly intention")
+            if (lower.includes('intention') || lower.includes('this week i want') ||
+                lower.includes('my focus') || lower.includes('this week is about')) {
                 return handleSetIntention(userMessage);
             }
 
             // Calendar/schedule queries (expanded patterns)
+            // Use word boundary to avoid matching "weekly" as "week"
             if (lower.match(/\b(week|tomorrow|today|monday|tuesday|wednesday|thursday|friday|saturday|sunday)\b/) &&
+                !lower.includes('intention') &&
                 (isQuestion || lower.includes('look') || lower.includes('coming up') || lower.includes('ahead') || lower.includes('have'))) {
                 return generateCalendarResponse(lower);
             }
@@ -2648,14 +2650,15 @@
                 targetDate.setDate(targetDate.getDate() + 1);
                 dateLabel = 'tomorrow';
             } else if (specificDay !== null) {
-                // Find the next occurrence of that day
+                // Find the occurrence of that day (today if it's that day, otherwise next occurrence)
                 targetDate = new Date(now);
                 const currentDay = now.getDay();
                 let daysUntil = specificDay - currentDay;
-                if (daysUntil <= 0) daysUntil += 7; // Next week if same day or past
-                if (daysUntil === 0) daysUntil = 7; // "This Monday" means next Monday if today is Monday
+                if (daysUntil < 0) daysUntil += 7; // Next week if the day already passed
+                // If daysUntil is 0, they're asking about TODAY
                 targetDate.setDate(targetDate.getDate() + daysUntil);
-                dateLabel = dayNames[specificDay].charAt(0).toUpperCase() + dayNames[specificDay].slice(1);
+                const dayName = dayNames[specificDay].charAt(0).toUpperCase() + dayNames[specificDay].slice(1);
+                dateLabel = daysUntil === 0 ? `today (${dayName})` : dayName;
             }
 
             const targetStr = formatDateISO(targetDate);
