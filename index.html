@@ -2479,9 +2479,15 @@
                                  lower.match(/^(i need to|i have to|i should|i must|i want to|gotta|gonna|need to|have to|should|must)\s/i) ||
                                  lower.match(/^[a-z]+ (mom|dad|doctor|dentist|boss|team|client)/i); // "call mom", "email boss"
 
-            // Weekly intention setting (check BEFORE calendar to catch "weekly intention")
+            // Weekly intention - distinguish questions about the feature vs actually setting one
             if (lower.includes('intention') || lower.includes('this week i want') ||
                 lower.includes('my focus') || lower.includes('this week is about')) {
+                // Check if this is a QUESTION about intentions (not setting one)
+                const isIntentionQuestion = lower.match(/^(can i|how do i|how can i|what is|what's|do you|does this|is there)/i) ||
+                                            (lower.includes('?') && !lower.match(/(my intention is|i want to|focus on|this week)/i));
+                if (isIntentionQuestion) {
+                    return { type: 'text', content: `Yes! You can set a weekly intention by telling me something like:\n\n• "My intention this week is to stay focused"\n• "This week I want to prioritize self-care"\n• "My focus is finishing the project"\n\nWhat would you like your intention to be?` };
+                }
                 return handleSetIntention(userMessage);
             }
 
@@ -4296,7 +4302,11 @@
         }
 
         function formatDateISO(date) {
-            return date.toISOString().split('T')[0];
+            // Use local date components to avoid timezone issues
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
         }
 
         function formatDateRange(days) {
