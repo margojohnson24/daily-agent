@@ -526,29 +526,6 @@
             margin-top: 0.25rem;
         }
 
-        .oracle-vibe {
-            margin-top: 1.25rem;
-            padding: 1rem;
-            background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(168, 85, 247, 0.08));
-            border-radius: 1rem;
-            max-width: 400px;
-            margin-left: auto;
-            margin-right: auto;
-        }
-
-        .oracle-descriptor {
-            font-size: 1.1rem;
-            color: var(--text-primary);
-            font-weight: 500;
-            margin-bottom: 0.25rem;
-        }
-
-        .oracle-context {
-            font-size: 0.9rem;
-            color: var(--text-secondary);
-            font-style: italic;
-        }
-
         .oracle-summary {
             max-width: 480px;
             margin: 1.5rem auto;
@@ -589,6 +566,234 @@
             opacity: 1;
             transform: translateY(0);
             transition: none;
+        }
+
+        .oracle-line.today-toggle {
+            cursor: pointer;
+            justify-content: space-between;
+            padding: 0.5rem 0;
+        }
+
+        .oracle-line.today-toggle:hover {
+            color: var(--text-primary);
+        }
+
+        .expand-icon {
+            font-size: 0.7rem;
+            opacity: 0.6;
+        }
+
+        .today-expanded {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease, padding 0.3s ease;
+            padding: 0;
+        }
+
+        .today-expanded.open {
+            max-height: 400px;
+            padding: 0.75rem 0;
+            border-top: 1px solid var(--border);
+            margin-top: 0.5rem;
+        }
+
+        .today-section-label {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin: 0.5rem 0 0.25rem;
+        }
+
+        .today-section-label:first-child {
+            margin-top: 0;
+        }
+
+        .today-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.4rem 0.5rem;
+            font-size: 0.85rem;
+            border-radius: 0.375rem;
+            cursor: pointer;
+            transition: background 0.15s;
+        }
+
+        .today-item:hover {
+            background: var(--bg-tertiary);
+        }
+
+        .today-item.event {
+            color: var(--text-secondary);
+        }
+
+        .today-time {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            min-width: 60px;
+        }
+
+        .today-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--text-muted);
+            flex-shrink: 0;
+        }
+
+        .today-dot.work { background: var(--work); }
+        .today-dot.personal { background: var(--personal); }
+        .today-dot.curiosity { background: var(--curiosity); }
+        .today-dot.people { background: var(--people); }
+
+        .today-title {
+            flex: 1;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .today-empty {
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            font-style: italic;
+            padding: 0.5rem 0;
+        }
+
+        .today-item.more {
+            color: var(--text-muted);
+            font-style: italic;
+        }
+
+        /* Weekly Intention */
+        .intention-section {
+            margin-top: 1rem;
+            padding: 1rem;
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.12), rgba(168, 85, 247, 0.1));
+            border-radius: 0.75rem;
+            position: relative;
+            max-width: 400px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .intention-label {
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 0.35rem;
+        }
+
+        .intention-text {
+            font-size: 1rem;
+            color: var(--text-primary);
+            font-weight: 500;
+            line-height: 1.4;
+        }
+
+        .intention-clear {
+            position: absolute;
+            top: 0.5rem;
+            right: 0.5rem;
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            font-size: 1.1rem;
+            cursor: pointer;
+            padding: 0.25rem;
+            line-height: 1;
+            opacity: 0.5;
+            transition: opacity 0.2s;
+        }
+
+        .intention-clear:hover {
+            opacity: 1;
+        }
+
+        /* Agent Response Area */
+        .agent-response-area {
+            min-height: 60px;
+        }
+
+        .agent-response {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 0.75rem;
+            padding: 1rem;
+            font-size: 0.9rem;
+            line-height: 1.6;
+            color: var(--text-secondary);
+            animation: fadeIn 0.3s ease;
+        }
+
+        .agent-response strong {
+            color: var(--text-primary);
+        }
+
+        .agent-thinking {
+            padding: 1rem;
+            text-align: center;
+        }
+
+        /* Task Preview Inline */
+        .task-preview-inline {
+            background: var(--bg-tertiary);
+            border-radius: 0.5rem;
+            padding: 0.75rem;
+            margin-top: 0.5rem;
+        }
+
+        .preview-header {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin-bottom: 0.5rem;
+        }
+
+        .preview-task-title {
+            font-weight: 500;
+            color: var(--text-primary);
+            margin-bottom: 0.25rem;
+        }
+
+        .preview-task-meta {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin-bottom: 0.75rem;
+        }
+
+        .preview-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .preview-btn {
+            padding: 0.4rem 0.75rem;
+            font-size: 0.8rem;
+            border-radius: 0.375rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .preview-btn.confirm {
+            background: var(--accent);
+            border: none;
+            color: white;
+        }
+
+        .preview-btn.confirm:hover {
+            background: var(--accent-hover);
+        }
+
+        .preview-btn.edit {
+            background: none;
+            border: 1px solid var(--border);
+            color: var(--text-secondary);
+        }
+
+        .preview-btn.edit:hover {
+            border-color: var(--text-muted);
         }
 
         .typing-cursor {
@@ -2262,6 +2467,12 @@
         async function processAgentMessage(userMessage) {
             const lower = userMessage.toLowerCase();
 
+            // Weekly intention setting
+            if (lower.includes('my intention') || lower.includes('this week i want') || lower.includes('set intention') ||
+                lower.includes('my focus') || lower.includes('this week is about') || lower.match(/^intention:/i)) {
+                return handleSetIntention(userMessage);
+            }
+
             // Calendar queries
             if (lower.includes('tomorrow') || lower.includes('this week') || lower.includes('calendar') || lower.includes('schedule')) {
                 return generateCalendarResponse(lower);
@@ -2456,6 +2667,37 @@
             return { type: 'text', content: text };
         }
 
+        function handleSetIntention(userMessage) {
+            // Extract the intention from various phrasings
+            let intention = userMessage;
+
+            // Remove common prefixes
+            const prefixes = [
+                /^(my )?intention(?: for this week)?(?: is)?:?\s*/i,
+                /^(this week )?i want to\s*/i,
+                /^set intention:?\s*/i,
+                /^my focus(?: this week)?(?: is)?:?\s*/i,
+                /^this week is about\s*/i,
+                /^intention:\s*/i
+            ];
+
+            for (const prefix of prefixes) {
+                intention = intention.replace(prefix, '');
+            }
+
+            intention = intention.trim();
+
+            if (intention.length < 3) {
+                return { type: 'text', content: "What would you like your intention for this week to be? Just tell me in your own words." };
+            }
+
+            // Capitalize first letter
+            intention = intention.charAt(0).toUpperCase() + intention.slice(1);
+
+            setWeeklyIntention(intention);
+            return { type: 'text', content: `Your intention is set: <strong>"${escapeHtml(intention)}"</strong>\n\nI'll keep this visible to help you stay focused. You can change it anytime by telling me a new intention, or clear it if you'd like.` };
+        }
+
         function generateDaySummaryResponse() {
             const active = tasks.filter(t => !t.completed);
             const today = new Date().toDateString();
@@ -2532,6 +2774,9 @@
         let expandedCalendarCell = null;
         let homeAnimated = false;
         let chatMessages = [];
+        let lastAgentResponse = null; // For showing only latest response
+        let weeklyIntention = localStorage.getItem('weeklyIntention') || '';
+        let todayExpanded = false;
         let calendarWeekOffset = 0; // 0 = current week, -1 = last week, 1 = next week
         let calendarViewMode = 'week'; // 'today' or 'week'
         let googleCalendarEvents = [];
@@ -2992,9 +3237,8 @@
             if (hour < 12) greeting = 'Good morning';
             else if (hour < 17) greeting = 'Good afternoon';
 
-            // Get weather and day descriptor
+            // Get weather
             const weather = await fetchWeather();
-            const dayDesc = generateDayDescriptor();
 
             // Build weather line
             let weatherLine = '';
@@ -3009,24 +3253,17 @@
             const todayEvents = googleCalendarEvents.filter(e => {
                 const start = e.start.dateTime || e.start.date;
                 return start && start.startsWith(todayStr);
+            }).sort((a, b) => {
+                const aTime = a.start.dateTime || a.start.date;
+                const bTime = b.start.dateTime || b.start.date;
+                return aTime.localeCompare(bTime);
             });
             const waiting = active.filter(t => t.waitingOn).length;
             const todayDateStr = now.toDateString();
             const doneToday = tasks.filter(t => t.completed && t.completedAt && new Date(t.completedAt).toDateString() === todayDateStr).length;
 
-            // Build insight line based on context
-            let insightLine = '';
-            if (todayEvents.length > 0 && scheduledToday.length > 0) {
-                insightLine = `${todayEvents.length} event${todayEvents.length > 1 ? 's' : ''} and ${scheduledToday.length} task${scheduledToday.length > 1 ? 's' : ''} on your plate`;
-            } else if (todayEvents.length > 0) {
-                insightLine = `${todayEvents.length} event${todayEvents.length > 1 ? 's' : ''} on your calendar`;
-            } else if (scheduledToday.length > 0) {
-                insightLine = `${scheduledToday.length} task${scheduledToday.length > 1 ? 's' : ''} scheduled for today`;
-            } else if (active.length > 0) {
-                insightLine = `${active.length} open task${active.length > 1 ? 's' : ''} waiting for your attention`;
-            } else {
-                insightLine = 'A clear slate — what would you like to focus on?';
-            }
+            // Summary counts
+            const totalTodayItems = todayEvents.length + scheduledToday.length;
 
             // Proactive nudge based on time and context
             let nudgeLine = '';
@@ -3046,24 +3283,60 @@
 
             // Smart placeholder based on time/context
             let placeholder = 'What\'s on your mind?';
-            if (isMorning) placeholder = 'Plan your day or add a task...';
+            if (isMorning) placeholder = 'Plan your day, set an intention, or add a task...';
             else if (isEvening) placeholder = 'Reflect on today or plan for tomorrow...';
             else if (isWorkHours) placeholder = 'Add a task, ask a question, or get a suggestion...';
 
-            // Build chat history HTML
-            let chatHtml = '';
-            chatMessages.forEach(msg => {
-                if (msg.role === 'user') {
-                    chatHtml += `<div class="chat-message user">${escapeHtml(msg.text)}</div>`;
-                } else if (msg.type === 'text') {
-                    chatHtml += `<div class="chat-message agent">${msg.content}</div>`;
-                } else if (msg.type === 'task-preview') {
-                    chatHtml += renderChatTaskPreview(msg);
+            // Build "Today at a glance" expandable content
+            let todayItemsHtml = '';
+            if (todayEvents.length > 0) {
+                todayItemsHtml += '<div class="today-section-label">Calendar</div>';
+                todayEvents.forEach(e => {
+                    const time = e.start.dateTime ? new Date(e.start.dateTime).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }) : 'All day';
+                    todayItemsHtml += `<div class="today-item event"><span class="today-time">${time}</span><span class="today-title">${escapeHtml(e.summary)}</span></div>`;
+                });
+            }
+            if (scheduledToday.length > 0) {
+                todayItemsHtml += '<div class="today-section-label">Tasks</div>';
+                scheduledToday.forEach(t => {
+                    const cat = t.category ? CATEGORIES.find(c => c.id === t.category) : null;
+                    todayItemsHtml += `<div class="today-item task" onclick="showTaskModal('${t.id}')"><span class="today-dot ${t.category || ''}"></span><span class="today-title">${escapeHtml(t.title)}</span></div>`;
+                });
+            }
+            if (active.length > 0 && scheduledToday.length === 0) {
+                todayItemsHtml += '<div class="today-section-label">Open Tasks</div>';
+                active.slice(0, 5).forEach(t => {
+                    todayItemsHtml += `<div class="today-item task" onclick="showTaskModal('${t.id}')"><span class="today-dot ${t.category || ''}"></span><span class="today-title">${escapeHtml(t.title)}</span></div>`;
+                });
+                if (active.length > 5) {
+                    todayItemsHtml += `<div class="today-item more">+${active.length - 5} more tasks</div>`;
                 }
-            });
+            }
 
             // Format date nicely
             const dateStr = now.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
+
+            // Build latest response HTML (only show most recent, not full history)
+            let responseHtml = '';
+            if (lastAgentResponse) {
+                if (lastAgentResponse.type === 'text') {
+                    responseHtml = `<div class="agent-response">${lastAgentResponse.content}</div>`;
+                } else if (lastAgentResponse.type === 'task-preview') {
+                    responseHtml = `<div class="agent-response">${renderChatTaskPreviewInline(lastAgentResponse)}</div>`;
+                }
+            }
+
+            // Weekly intention section (only show if set)
+            let intentionHtml = '';
+            if (weeklyIntention) {
+                intentionHtml = `
+                    <div class="intention-section">
+                        <div class="intention-label">This week's intention</div>
+                        <div class="intention-text">${escapeHtml(weeklyIntention)}</div>
+                        <button class="intention-clear" onclick="clearWeeklyIntention()" title="Clear intention">×</button>
+                    </div>
+                `;
+            }
 
             el.innerHTML = `
                 <div class="oracle-header">
@@ -3071,14 +3344,17 @@
                         <h2>${greeting}, <strong>Margo</strong></h2>
                         <p class="oracle-date">${dateStr}</p>
                     </div>
-                    <div class="oracle-vibe">
-                        <p class="oracle-descriptor">${dayDesc.dayVibe}</p>
-                        <p class="oracle-context">${dayDesc.contextVibe}</p>
-                    </div>
+                    ${intentionHtml}
                 </div>
                 <div class="oracle-summary" id="homeSummary">
                     ${weatherLine ? `<div class="oracle-line weather" data-index="0">${weatherLine}</div>` : ''}
-                    <div class="oracle-line insight" data-index="1">${insightLine}</div>
+                    <div class="oracle-line today-toggle" data-index="1" onclick="toggleTodayExpand()">
+                        <span>${totalTodayItems > 0 ? `${totalTodayItems} item${totalTodayItems > 1 ? 's' : ''} today` : 'Nothing scheduled today'}</span>
+                        <span class="expand-icon">${todayExpanded ? '▲' : '▼'}</span>
+                    </div>
+                    <div class="today-expanded ${todayExpanded ? 'open' : ''}" id="todayExpanded">
+                        ${todayItemsHtml || '<div class="today-empty">Your day is open — add tasks or events to see them here.</div>'}
+                    </div>
                     ${nudgeLine ? `<div class="oracle-line nudge" data-index="2">${nudgeLine}</div>` : ''}
                 </div>
                 <div class="chat-container">
@@ -3086,8 +3362,8 @@
                         <input type="text" class="chat-input" id="chatInput" placeholder="${placeholder}" autocomplete="off">
                         <button class="chat-send-btn" onclick="sendChatMessage()">&#10148;</button>
                     </div>
-                    <div class="chat-messages" id="chatMessages">
-                        ${chatHtml}
+                    <div class="agent-response-area" id="agentResponseArea">
+                        ${responseHtml}
                     </div>
                 </div>
             `;
@@ -3108,6 +3384,43 @@
             }
         }
 
+        function toggleTodayExpand() {
+            todayExpanded = !todayExpanded;
+            const el = document.getElementById('todayExpanded');
+            const icon = document.querySelector('.expand-icon');
+            if (el) el.classList.toggle('open', todayExpanded);
+            if (icon) icon.textContent = todayExpanded ? '▲' : '▼';
+        }
+
+        function setWeeklyIntention(intention) {
+            weeklyIntention = intention;
+            localStorage.setItem('weeklyIntention', intention);
+            renderHomeView();
+        }
+
+        function clearWeeklyIntention() {
+            weeklyIntention = '';
+            localStorage.removeItem('weeklyIntention');
+            renderHomeView();
+        }
+
+        function renderChatTaskPreviewInline(data) {
+            const id = 'preview-' + Date.now();
+            const catLabel = data.category ? CATEGORIES.find(c => c.id === data.category)?.label : '';
+
+            return `
+                <div class="task-preview-inline" id="${id}">
+                    <div class="preview-header">I'll create this task:</div>
+                    <div class="preview-task-title">${escapeHtml(data.title)}</div>
+                    ${catLabel ? `<div class="preview-task-meta">${catLabel}</div>` : ''}
+                    <div class="preview-actions">
+                        <button class="preview-btn confirm" onclick="confirmPreviewTask('${id}')">Add task</button>
+                        <button class="preview-btn edit" onclick="editPreviewTask('${id}')">Edit first</button>
+                    </div>
+                </div>
+            `;
+        }
+
         async function sendChatMessage() {
             const input = document.getElementById('chatInput');
             const text = input.value.trim();
@@ -3117,6 +3430,33 @@
         }
 
         async function handleChatInput(text) {
+            chatMessages.push({ role: 'user', text });
+
+            // Show thinking state
+            const responseArea = document.getElementById('agentResponseArea');
+            if (responseArea) {
+                responseArea.innerHTML = '<div class="agent-thinking"><span class="thinking-dots"><span>.</span><span>.</span><span>.</span></span></div>';
+            }
+
+            // Simulate brief delay
+            await new Promise(r => setTimeout(r, 400 + Math.random() * 300));
+
+            const response = await processAgentMessage(text);
+            chatMessages.push({ role: 'agent', ...response });
+            lastAgentResponse = response;
+
+            // Update response area
+            if (responseArea) {
+                if (response.type === 'text') {
+                    responseArea.innerHTML = `<div class="agent-response">${response.content}</div>`;
+                } else if (response.type === 'task-preview') {
+                    responseArea.innerHTML = `<div class="agent-response">${renderChatTaskPreviewInline(response)}</div>`;
+                }
+            }
+        }
+
+        // Legacy function for backwards compatibility
+        async function handleChatInputLegacy(text) {
             chatMessages.push({ role: 'user', text });
 
             // Show user message + thinking indicator
