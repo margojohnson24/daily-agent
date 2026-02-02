@@ -499,48 +499,93 @@
             animation: fadeIn 0.3s ease-out;
         }
 
-        .home-greeting {
+        /* Oracle-style Home View */
+        .oracle-header {
             text-align: center;
             padding: 2rem 0 1.5rem;
         }
 
-        .home-greeting h2 {
-            font-size: 1.5rem;
+        .oracle-greeting h2 {
+            font-size: 1.6rem;
             font-weight: 300;
             color: var(--text-primary);
             margin-bottom: 0.25rem;
         }
 
-        .home-greeting h2 strong {
+        .oracle-greeting h2 strong {
             font-weight: 600;
+            background: linear-gradient(135deg, #6366f1, #a855f7, #ec4899);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
         }
 
-        .home-summary {
+        .oracle-date {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            margin-top: 0.25rem;
+        }
+
+        .oracle-vibe {
+            margin-top: 1.25rem;
+            padding: 1rem;
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(168, 85, 247, 0.08));
+            border-radius: 1rem;
+            max-width: 400px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .oracle-descriptor {
+            font-size: 1.1rem;
+            color: var(--text-primary);
+            font-weight: 500;
+            margin-bottom: 0.25rem;
+        }
+
+        .oracle-context {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            font-style: italic;
+        }
+
+        .oracle-summary {
             max-width: 480px;
-            margin: 0 auto 2rem;
-            padding: 1.25rem;
+            margin: 1.5rem auto;
+            padding: 1rem 1.25rem;
             background: var(--bg-secondary);
             border: 1px solid var(--border);
             border-radius: 0.75rem;
-            min-height: 100px;
         }
 
-        .home-summary-line {
+        .oracle-line {
             font-size: 0.9rem;
             color: var(--text-secondary);
-            padding: 0.25rem 0;
-            line-height: 1.6;
+            padding: 0.4rem 0;
+            line-height: 1.5;
             opacity: 0;
-            transform: translateY(4px);
+            transform: translateY(6px);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
         }
 
-        .home-summary-line.visible {
+        .oracle-line.weather {
+            color: var(--text-primary);
+        }
+
+        .oracle-line.nudge {
+            color: var(--accent);
+            font-weight: 500;
+        }
+
+        .oracle-line.visible {
             opacity: 1;
             transform: translateY(0);
-            transition: opacity 0.3s ease, transform 0.3s ease;
+            transition: opacity 0.4s ease, transform 0.4s ease;
         }
 
-        .home-summary-line.instant {
+        .oracle-line.instant {
             opacity: 1;
             transform: translateY(0);
             transition: none;
@@ -560,43 +605,12 @@
             50% { opacity: 0; }
         }
 
+        /* Legacy - keeping for compatibility */
         .home-quick-actions {
-            display: flex;
-            gap: 0.5rem;
-            justify-content: center;
-            margin-bottom: 2rem;
-            flex-wrap: wrap;
+            display: none;
         }
 
         .quick-action-btn {
-            padding: 0.5rem 1rem;
-            border: 1px solid var(--border);
-            background: var(--bg-secondary);
-            color: var(--text-secondary);
-            border-radius: 2rem;
-            font-size: 0.8rem;
-            cursor: pointer;
-            transition: all 0.2s;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .quick-action-btn::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
-            transition: left 0.4s ease;
-        }
-
-        .quick-action-btn:hover::before {
-            left: 100%;
-        }
-
-        .quick-action-btn:hover {
             border-color: var(--accent);
             color: var(--accent);
             background: rgba(99, 102, 241, 0.05);
@@ -2248,8 +2262,22 @@
         async function processAgentMessage(userMessage) {
             const lower = userMessage.toLowerCase();
 
+            // Calendar queries
+            if (lower.includes('tomorrow') || lower.includes('this week') || lower.includes('calendar') || lower.includes('schedule')) {
+                return generateCalendarResponse(lower);
+            }
+
+            // Vibe-based task suggestions
+            if (lower.includes('help me pick') || lower.includes('what should i') || lower.includes('suggest') ||
+                lower.match(/i have (\d+|an?|some) (hour|minute|min|time)/) ||
+                lower.includes('low energy') || lower.includes('high energy') || lower.includes('tired') ||
+                lower.includes('focused') || lower.includes('distracted') || lower.includes('quick win')) {
+                return generateVibeBasedSuggestion(lower);
+            }
+
             // Check for review/summary requests
-            if (lower.includes('review') || lower.includes("what's") || lower.includes('summary') || lower.includes('how many') || lower.includes('today')) {
+            if (lower.includes('review') || lower.match(/what'?s (up|going|happening)/) || lower.includes('summary') ||
+                lower.includes('how many') || lower.includes('how am i doing')) {
                 return generateDaySummaryResponse();
             }
 
@@ -2259,6 +2287,17 @@
 
             if (lower.includes('waiting') || lower.includes('blocked')) {
                 return generateWaitingResponse();
+            }
+
+            // Greetings and general chat
+            if (lower.match(/^(hi|hello|hey|good morning|good afternoon|good evening)/)) {
+                return generateGreetingResponse();
+            }
+
+            // Questions that might need deeper AI (future: route to Claude)
+            if (lower.includes('how do i') || lower.includes('what is') || lower.includes('explain') ||
+                lower.includes('tell me about') || lower.includes('research')) {
+                return { type: 'text', content: `That's a great question! In the future, I'll be able to search and research for you. For now, you might want to ask Claude or ChatGPT about: "<em>${escapeHtml(userMessage)}</em>"` };
             }
 
             // Roadmap commands
@@ -2274,6 +2313,147 @@
 
             // Default: treat as task creation
             return generateTaskCreationResponse(userMessage);
+        }
+
+        function generateGreetingResponse() {
+            const hour = new Date().getHours();
+            const active = tasks.filter(t => !t.completed);
+            const todayStr = new Date().toDateString();
+            const doneToday = tasks.filter(t => t.completed && t.completedAt && new Date(t.completedAt).toDateString() === todayStr).length;
+
+            let greeting = 'Hey there! ';
+            if (hour < 12) greeting = 'Good morning! ';
+            else if (hour < 17) greeting = 'Good afternoon! ';
+            else greeting = 'Good evening! ';
+
+            let context = '';
+            if (doneToday > 0) {
+                context = `You've already knocked out ${doneToday} task${doneToday > 1 ? 's' : ''} today. `;
+            }
+            if (active.length > 0) {
+                context += `You have ${active.length} task${active.length > 1 ? 's' : ''} on your plate. `;
+            }
+
+            return { type: 'text', content: greeting + context + 'What can I help you with?' };
+        }
+
+        function generateCalendarResponse(lower) {
+            const now = new Date();
+            let targetDate = now;
+            let dateLabel = 'today';
+
+            if (lower.includes('tomorrow')) {
+                targetDate = new Date(now);
+                targetDate.setDate(targetDate.getDate() + 1);
+                dateLabel = 'tomorrow';
+            }
+
+            const targetStr = formatDateISO(targetDate);
+            const events = googleCalendarEvents.filter(e => {
+                const start = e.start.dateTime || e.start.date;
+                return start && start.startsWith(targetStr);
+            });
+            const scheduledTasks = tasks.filter(t => !t.completed && t.scheduledDate === targetStr);
+
+            let text = `Here's what's on ${dateLabel}:\n\n`;
+
+            if (events.length === 0 && scheduledTasks.length === 0) {
+                text = `Your ${dateLabel} looks clear! No events or scheduled tasks. A blank canvas to shape however you'd like.`;
+            } else {
+                if (events.length > 0) {
+                    text += `<strong>Calendar:</strong>\n`;
+                    events.slice(0, 5).forEach(e => {
+                        const time = e.start.dateTime ? new Date(e.start.dateTime).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }) : 'All day';
+                        text += `• ${time} — ${e.summary}\n`;
+                    });
+                    if (events.length > 5) text += `  ...and ${events.length - 5} more\n`;
+                }
+                if (scheduledTasks.length > 0) {
+                    text += `\n<strong>Scheduled tasks:</strong>\n`;
+                    scheduledTasks.slice(0, 5).forEach(t => {
+                        text += `• ${t.title}\n`;
+                    });
+                }
+            }
+
+            return { type: 'text', content: text };
+        }
+
+        function generateVibeBasedSuggestion(lower) {
+            const active = tasks.filter(t => !t.completed);
+            if (active.length === 0) {
+                return { type: 'text', content: "You don't have any open tasks right now. Enjoy the clear space, or tell me something new to add!" };
+            }
+
+            // Parse time available
+            let timeAvailable = null;
+            const timeMatch = lower.match(/(\d+)\s*(hour|minute|min)/);
+            if (timeMatch) {
+                const num = parseInt(timeMatch[1]);
+                timeAvailable = timeMatch[2].startsWith('hour') ? num * 60 : num;
+            } else if (lower.includes('an hour') || lower.includes('1 hour')) {
+                timeAvailable = 60;
+            } else if (lower.includes('quick') || lower.includes('few minutes')) {
+                timeAvailable = 15;
+            }
+
+            // Parse energy level
+            let energyLevel = 'medium';
+            if (lower.includes('low energy') || lower.includes('tired') || lower.includes('exhausted')) {
+                energyLevel = 'low';
+            } else if (lower.includes('high energy') || lower.includes('focused') || lower.includes('motivated')) {
+                energyLevel = 'high';
+            }
+
+            // Filter and score tasks
+            let suggestions = active.map(t => {
+                let score = 0;
+
+                // Quick wins for low energy or limited time
+                if (energyLevel === 'low' || (timeAvailable && timeAvailable <= 30)) {
+                    if (t.title.length < 30) score += 2; // Short titles often = quick tasks
+                    if (t.category === 'personal') score += 1;
+                }
+
+                // Work tasks for high energy / focused time
+                if (energyLevel === 'high' || lower.includes('focused')) {
+                    if (t.category === 'work') score += 2;
+                    if (t.status === 'in-progress') score += 1; // Continue what's started
+                }
+
+                // People tasks if mentioned
+                if (lower.includes('connect') || lower.includes('people') || lower.includes('social')) {
+                    if (t.category === 'people') score += 3;
+                }
+
+                return { task: t, score };
+            });
+
+            // Sort by score and pick top 3
+            suggestions.sort((a, b) => b.score - a.score);
+            const top = suggestions.slice(0, 3);
+
+            let text = '';
+            if (energyLevel === 'low') {
+                text = "For a gentler moment, here are some lighter tasks:\n\n";
+            } else if (energyLevel === 'high') {
+                text = "You're feeling focused — here are some meaningful tasks to tackle:\n\n";
+            } else if (timeAvailable) {
+                text = `With ${timeAvailable >= 60 ? Math.round(timeAvailable/60) + ' hour' + (timeAvailable >= 120 ? 's' : '') : timeAvailable + ' minutes'}, you could:\n\n`;
+            } else {
+                text = "Based on what you have open, I'd suggest:\n\n";
+            }
+
+            top.forEach((s, i) => {
+                const cat = s.task.category ? CATEGORIES.find(c => c.id === s.task.category)?.label : '';
+                text += `${i + 1}. <strong>${escapeHtml(s.task.title)}</strong>`;
+                if (cat) text += ` <em>(${cat})</em>`;
+                text += '\n';
+            });
+
+            text += '\nJust tell me which one you want to start, or describe what vibe you\'re actually going for!';
+
+            return { type: 'text', content: text };
         }
 
         function generateDaySummaryResponse() {
@@ -2356,6 +2536,167 @@
         let calendarViewMode = 'week'; // 'today' or 'week'
         let googleCalendarEvents = [];
         let supabaseReady = false;
+        let weatherData = null;
+        let weatherLastFetch = null;
+
+        // ===================== WEATHER =====================
+        // Austin, TX coordinates (78721)
+        const WEATHER_LAT = 30.26;
+        const WEATHER_LON = -97.71;
+
+        async function fetchWeather() {
+            // Cache weather for 30 minutes
+            if (weatherData && weatherLastFetch && (Date.now() - weatherLastFetch) < 30 * 60 * 1000) {
+                return weatherData;
+            }
+
+            try {
+                const url = `https://api.open-meteo.com/v1/forecast?latitude=${WEATHER_LAT}&longitude=${WEATHER_LON}&current=temperature_2m,weather_code,wind_speed_10m&temperature_unit=fahrenheit&timezone=America/Chicago`;
+                const res = await fetch(url);
+                const data = await res.json();
+
+                const weatherCodes = {
+                    0: { desc: 'clear', icon: '☀️', advice: 'Beautiful day for a walk' },
+                    1: { desc: 'mostly clear', icon: '🌤️', advice: 'Nice day ahead' },
+                    2: { desc: 'partly cloudy', icon: '⛅', advice: 'Pleasant conditions' },
+                    3: { desc: 'overcast', icon: '☁️', advice: 'Cozy indoor day' },
+                    45: { desc: 'foggy', icon: '🌫️', advice: 'Drive carefully' },
+                    48: { desc: 'foggy', icon: '🌫️', advice: 'Visibility is low' },
+                    51: { desc: 'light drizzle', icon: '🌦️', advice: 'Grab an umbrella' },
+                    53: { desc: 'drizzle', icon: '🌧️', advice: 'Umbrella weather' },
+                    55: { desc: 'heavy drizzle', icon: '🌧️', advice: 'Stay dry out there' },
+                    61: { desc: 'light rain', icon: '🌧️', advice: 'Light layers and umbrella' },
+                    63: { desc: 'rain', icon: '🌧️', advice: 'Rainy day vibes' },
+                    65: { desc: 'heavy rain', icon: '🌧️', advice: 'Maybe reschedule outdoor plans' },
+                    71: { desc: 'light snow', icon: '🌨️', advice: 'Bundle up!' },
+                    73: { desc: 'snow', icon: '❄️', advice: 'Snow day energy' },
+                    75: { desc: 'heavy snow', icon: '❄️', advice: 'Stay warm and cozy' },
+                    80: { desc: 'rain showers', icon: '🌦️', advice: 'Scattered showers expected' },
+                    81: { desc: 'rain showers', icon: '🌧️', advice: 'Keep an umbrella handy' },
+                    82: { desc: 'heavy showers', icon: '⛈️', advice: 'Storm energy today' },
+                    95: { desc: 'thunderstorm', icon: '⛈️', advice: 'Stay safe indoors' },
+                    96: { desc: 'thunderstorm with hail', icon: '⛈️', advice: 'Severe weather — be cautious' },
+                    99: { desc: 'thunderstorm with hail', icon: '⛈️', advice: 'Take shelter' }
+                };
+
+                const code = data.current.weather_code;
+                const weather = weatherCodes[code] || { desc: 'variable', icon: '🌤️', advice: '' };
+                const temp = Math.round(data.current.temperature_2m);
+
+                // Temperature-based advice
+                let tempAdvice = '';
+                if (temp < 40) tempAdvice = 'Bundle up in warm layers';
+                else if (temp < 55) tempAdvice = 'A jacket would be nice';
+                else if (temp < 70) tempAdvice = 'Perfect layers weather';
+                else if (temp < 85) tempAdvice = 'Light and breezy';
+                else if (temp >= 85) tempAdvice = 'Sunscreen and water essential';
+
+                weatherData = {
+                    temp,
+                    desc: weather.desc,
+                    icon: weather.icon,
+                    advice: weather.advice || tempAdvice,
+                    tempAdvice
+                };
+                weatherLastFetch = Date.now();
+                return weatherData;
+            } catch (e) {
+                console.error('Weather fetch failed:', e);
+                return null;
+            }
+        }
+
+        // ===================== POETIC DAY DESCRIPTORS =====================
+        function generateDayDescriptor() {
+            const now = new Date();
+            const hour = now.getHours();
+            const dayOfWeek = now.getDay(); // 0 = Sunday
+            const dayOfMonth = now.getDate();
+            const month = now.getMonth(); // 0 = January
+
+            // Count today's context
+            const todayStr = formatDateISO(now);
+            const todayEvents = googleCalendarEvents.filter(e => {
+                const start = e.start.dateTime || e.start.date;
+                return start && start.startsWith(todayStr);
+            });
+            const activeTasks = tasks.filter(t => !t.completed);
+            const workTasks = activeTasks.filter(t => t.category === 'work');
+            const peopleTasks = activeTasks.filter(t => t.category === 'people');
+            const scheduledToday = activeTasks.filter(t => t.scheduledDate === todayStr);
+
+            // Seasonal context
+            const seasons = {
+                spring: [2, 3, 4],
+                summer: [5, 6, 7],
+                fall: [8, 9, 10],
+                winter: [11, 0, 1]
+            };
+            let season = 'winter';
+            for (const [s, months] of Object.entries(seasons)) {
+                if (months.includes(month)) { season = s; break; }
+            }
+
+            // Build descriptor based on context
+            const descriptors = [];
+
+            // Day of week vibes
+            const dayVibes = {
+                0: ['A Sunday for restoration', 'Sunday spaciousness', 'Gentle Sunday rhythms', 'A day to refill your cup'],
+                1: ['Fresh Monday momentum', 'New week, new possibilities', 'Monday\'s clean slate', 'Week-opener energy'],
+                2: ['Tuesday\'s steady build', 'Finding your midweek groove', 'A Tuesday for progress'],
+                3: ['Wednesday\'s pivot point', 'Midweek momentum', 'Hump day — you\'re halfway there'],
+                4: ['Thursday\'s home stretch', 'Almost-Friday energy', 'Penultimate day power'],
+                5: ['Friday freedom ahead', 'Week\'s finishing flourish', 'Friday\'s reward is near'],
+                6: ['Saturday\'s open canvas', 'Weekend wandering time', 'A Saturday to savor']
+            };
+
+            // Time of day context
+            const timeVibes = {
+                morning: ['Morning light awaits', 'A fresh start', 'Dawn of possibility'],
+                afternoon: ['Afternoon unfolds', 'Midday momentum', 'The day continues'],
+                evening: ['Evening settles in', 'Day winds down gently', 'Time to reflect']
+            };
+
+            let timeOfDay = 'evening';
+            if (hour < 12) timeOfDay = 'morning';
+            else if (hour < 17) timeOfDay = 'afternoon';
+
+            // Calendar density
+            if (todayEvents.length === 0 && scheduledToday.length < 3) {
+                descriptors.push('Space for wandering thoughts', 'An open day to shape', 'Room to breathe and create');
+            } else if (todayEvents.length > 4 || scheduledToday.length > 5) {
+                descriptors.push('A day of focused doing', 'Full calendar energy', 'Busy but purposeful');
+            } else {
+                descriptors.push('A balanced rhythm ahead', 'Structured yet flexible', 'Good mix of flow and focus');
+            }
+
+            // Work vs personal balance
+            if (workTasks.length > 5) {
+                descriptors.push('Work-forward day', 'Career momentum building');
+            }
+            if (peopleTasks.length > 2) {
+                descriptors.push('Connection-rich day', 'People on your mind');
+            }
+
+            // Seasonal touches
+            const seasonalTouches = {
+                spring: ['Spring renewal energy', 'Growth season continues'],
+                summer: ['Long summer light', 'Warm weather ease'],
+                fall: ['Autumn\'s reflective mood', 'Harvest season focus'],
+                winter: ['Winter\'s quieter pace', 'Cozy season vibes']
+            };
+
+            // Special dates
+            if (dayOfMonth === 1) descriptors.push('First of the month — fresh chapter');
+            if (dayOfWeek === 1 && dayOfMonth <= 7) descriptors.push('First Monday of the month');
+
+            // Pick descriptors (1 from day vibes, 1 from context)
+            const dayVibe = dayVibes[dayOfWeek][Math.floor(Math.random() * dayVibes[dayOfWeek].length)];
+            const contextVibe = descriptors[Math.floor(Math.random() * descriptors.length)] || 'A day full of potential';
+
+            return { dayVibe, contextVibe, season, timeOfDay };
+        }
 
         function migrateTasks() {
             let changed = false;
@@ -2641,31 +2982,73 @@
         }
 
         // ===================== HOME VIEW =====================
-        function renderHomeView() {
+        async function renderHomeView() {
             const el = document.getElementById('homeView');
             el.style.display = 'block';
 
-            const hour = new Date().getHours();
+            const now = new Date();
+            const hour = now.getHours();
             let greeting = 'Good evening';
             if (hour < 12) greeting = 'Good morning';
             else if (hour < 17) greeting = 'Good afternoon';
 
-            const now = new Date();
-            const dateStr = now.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
-            const active = tasks.filter(t => !t.completed);
-            const inProgress = active.filter(t => t.status === 'in-progress').length;
-            const workTasks = active.filter(t => t.category === 'work').length;
-            const waiting = active.filter(t => t.waitingOn).length;
-            const today = new Date().toDateString();
-            const doneToday = tasks.filter(t => t.completed && t.completedAt && new Date(t.completedAt).toDateString() === today).length;
+            // Get weather and day descriptor
+            const weather = await fetchWeather();
+            const dayDesc = generateDayDescriptor();
 
-            const summaryLines = [
-                dateStr + ' &middot; Sunny, 68&deg;F',
-                `${active.length} tasks open${inProgress > 0 ? `, ${inProgress} in progress` : ''}`,
-                workTasks > 0 ? `${workTasks} work tasks in your blocks today` : 'No work tasks scheduled',
-                waiting > 0 ? `${waiting} task${waiting > 1 ? 's' : ''} waiting on someone` : '',
-                doneToday > 0 ? `${doneToday} completed today` : ''
-            ].filter(Boolean);
+            // Build weather line
+            let weatherLine = '';
+            if (weather) {
+                weatherLine = `${weather.icon} ${weather.temp}° and ${weather.desc} — ${weather.advice}`;
+            }
+
+            // Task context
+            const active = tasks.filter(t => !t.completed);
+            const todayStr = formatDateISO(now);
+            const scheduledToday = active.filter(t => t.scheduledDate === todayStr);
+            const todayEvents = googleCalendarEvents.filter(e => {
+                const start = e.start.dateTime || e.start.date;
+                return start && start.startsWith(todayStr);
+            });
+            const waiting = active.filter(t => t.waitingOn).length;
+            const todayDateStr = now.toDateString();
+            const doneToday = tasks.filter(t => t.completed && t.completedAt && new Date(t.completedAt).toDateString() === todayDateStr).length;
+
+            // Build insight line based on context
+            let insightLine = '';
+            if (todayEvents.length > 0 && scheduledToday.length > 0) {
+                insightLine = `${todayEvents.length} event${todayEvents.length > 1 ? 's' : ''} and ${scheduledToday.length} task${scheduledToday.length > 1 ? 's' : ''} on your plate`;
+            } else if (todayEvents.length > 0) {
+                insightLine = `${todayEvents.length} event${todayEvents.length > 1 ? 's' : ''} on your calendar`;
+            } else if (scheduledToday.length > 0) {
+                insightLine = `${scheduledToday.length} task${scheduledToday.length > 1 ? 's' : ''} scheduled for today`;
+            } else if (active.length > 0) {
+                insightLine = `${active.length} open task${active.length > 1 ? 's' : ''} waiting for your attention`;
+            } else {
+                insightLine = 'A clear slate — what would you like to focus on?';
+            }
+
+            // Proactive nudge based on time and context
+            let nudgeLine = '';
+            const isWorkHours = hour >= 10 && hour <= 16 && now.getDay() >= 1 && now.getDay() <= 5;
+            const isEvening = hour >= 18;
+            const isMorning = hour >= 6 && hour < 10;
+
+            if (isMorning && doneToday === 0) {
+                nudgeLine = 'Ready to plan your day?';
+            } else if (isWorkHours && scheduledToday.length === 0 && active.length > 0) {
+                nudgeLine = 'Open time right now — want help picking something?';
+            } else if (isEvening && doneToday > 0) {
+                nudgeLine = `You completed ${doneToday} task${doneToday > 1 ? 's' : ''} today — nice work!`;
+            } else if (waiting > 0) {
+                nudgeLine = `${waiting} task${waiting > 1 ? 's' : ''} waiting on someone else`;
+            }
+
+            // Smart placeholder based on time/context
+            let placeholder = 'What\'s on your mind?';
+            if (isMorning) placeholder = 'Plan your day or add a task...';
+            else if (isEvening) placeholder = 'Reflect on today or plan for tomorrow...';
+            else if (isWorkHours) placeholder = 'Add a task, ask a question, or get a suggestion...';
 
             // Build chat history HTML
             let chatHtml = '';
@@ -2679,21 +3062,28 @@
                 }
             });
 
+            // Format date nicely
+            const dateStr = now.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
+
             el.innerHTML = `
-                <div class="home-greeting">
-                    <h2>${greeting}, <strong>Margo</strong></h2>
+                <div class="oracle-header">
+                    <div class="oracle-greeting">
+                        <h2>${greeting}, <strong>Margo</strong></h2>
+                        <p class="oracle-date">${dateStr}</p>
+                    </div>
+                    <div class="oracle-vibe">
+                        <p class="oracle-descriptor">${dayDesc.dayVibe}</p>
+                        <p class="oracle-context">${dayDesc.contextVibe}</p>
+                    </div>
                 </div>
-                <div class="home-summary" id="homeSummary">
-                    ${summaryLines.map((line, i) => `<div class="home-summary-line" data-index="${i}">${line}</div>`).join('')}
-                </div>
-                <div class="home-quick-actions">
-                    <button class="quick-action-btn" onclick="quickAction('add')">Add task</button>
-                    <button class="quick-action-btn" onclick="quickAction('review')">Review day</button>
-                    <button class="quick-action-btn" onclick="quickAction('urgent')">What's urgent?</button>
+                <div class="oracle-summary" id="homeSummary">
+                    ${weatherLine ? `<div class="oracle-line weather" data-index="0">${weatherLine}</div>` : ''}
+                    <div class="oracle-line insight" data-index="1">${insightLine}</div>
+                    ${nudgeLine ? `<div class="oracle-line nudge" data-index="2">${nudgeLine}</div>` : ''}
                 </div>
                 <div class="chat-container">
                     <div class="chat-input-area">
-                        <input type="text" class="chat-input" id="chatInput" placeholder="Tell me what you need..." autocomplete="off">
+                        <input type="text" class="chat-input" id="chatInput" placeholder="${placeholder}" autocomplete="off">
                         <button class="chat-send-btn" onclick="sendChatMessage()">&#10148;</button>
                     </div>
                     <div class="chat-messages" id="chatMessages">
@@ -2706,27 +3096,15 @@
                 if (e.key === 'Enter') { e.preventDefault(); sendChatMessage(); }
             });
 
-            // Animate summary lines
+            // Animate lines
             if (!homeAnimated) {
-                const lines = el.querySelectorAll('.home-summary-line');
+                const lines = el.querySelectorAll('.oracle-line');
                 lines.forEach((line, i) => {
-                    setTimeout(() => line.classList.add('visible'), 200 + i * 300);
+                    setTimeout(() => line.classList.add('visible'), 300 + i * 250);
                 });
                 homeAnimated = true;
             } else {
-                el.querySelectorAll('.home-summary-line').forEach(l => l.classList.add('instant'));
-            }
-        }
-
-        function quickAction(action) {
-            const input = document.getElementById('chatInput');
-            if (action === 'add') {
-                input.focus();
-                input.placeholder = 'Describe your task...';
-            } else if (action === 'review') {
-                handleChatInput('Review my day');
-            } else if (action === 'urgent') {
-                handleChatInput("What's urgent?");
+                el.querySelectorAll('.oracle-line').forEach(l => l.classList.add('instant'));
             }
         }
 
