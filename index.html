@@ -2465,7 +2465,19 @@
         // ===================== AI AGENT (simulated, API-ready) =====================
         // To swap in a real API, replace processAgentMessage() with an API call
         async function processAgentMessage(userMessage) {
-            const lower = userMessage.toLowerCase();
+            const lower = userMessage.toLowerCase().trim();
+
+            // Detect if this is a question (not a task)
+            const isQuestion = lower.startsWith('what') || lower.startsWith('when') || lower.startsWith('how') ||
+                               lower.startsWith('do i') || lower.startsWith('am i') || lower.startsWith('is there') ||
+                               lower.startsWith('are there') || lower.startsWith('can you') || lower.startsWith('could you') ||
+                               lower.startsWith('show me') || lower.startsWith('tell me') || lower.includes('?') ||
+                               lower.match(/^(what|when|where|how|why|who|which|do|does|is|are|can|could|will|would)('s|'re|'d|'ll|'ve)?\s/);
+
+            // Detect if this looks like a task (action-oriented)
+            const isLikelyTask = lower.match(/^(add|create|remind|schedule|call|email|text|buy|get|pick up|send|finish|complete|do|make|write|book|order|cancel|return|pay|submit|file|update|check|review|read|watch|listen|clean|fix|build|set up|organize|plan|prepare|start|begin)/i) ||
+                                 lower.match(/^(i need to|i have to|i should|i must|i want to|gotta|gonna|need to|have to|should|must)\s/i) ||
+                                 lower.match(/^[a-z]+ (mom|dad|doctor|dentist|boss|team|client)/i); // "call mom", "email boss"
 
             // Weekly intention setting
             if (lower.includes('my intention') || lower.includes('this week i want') || lower.includes('set intention') ||
@@ -2473,25 +2485,32 @@
                 return handleSetIntention(userMessage);
             }
 
-            // Calendar queries
-            if (lower.includes('tomorrow') || lower.includes('this week') || lower.includes('calendar') || lower.includes('schedule')) {
+            // Calendar/schedule queries (expanded patterns)
+            if (lower.match(/\b(week|tomorrow|today|monday|tuesday|wednesday|thursday|friday|saturday|sunday)\b/) &&
+                (isQuestion || lower.includes('look') || lower.includes('coming up') || lower.includes('ahead') || lower.includes('have'))) {
+                return generateCalendarResponse(lower);
+            }
+            if (lower.includes('calendar') || lower.includes('schedule') || lower.includes('what do i have') ||
+                lower.includes('what\'s on') || lower.includes('whats on') || lower.includes('coming up')) {
                 return generateCalendarResponse(lower);
             }
 
             // Vibe-based task suggestions
-            if (lower.includes('help me pick') || lower.includes('what should i') || lower.includes('suggest') ||
+            if (lower.includes('help me pick') || lower.includes('what should i do') || lower.includes('suggest') ||
                 lower.match(/i have (\d+|an?|some) (hour|minute|min|time)/) ||
                 lower.includes('low energy') || lower.includes('high energy') || lower.includes('tired') ||
-                lower.includes('focused') || lower.includes('distracted') || lower.includes('quick win')) {
+                lower.includes('focused') || lower.includes('distracted') || lower.includes('quick win') ||
+                lower.includes('something to do') || lower.includes('what can i')) {
                 return generateVibeBasedSuggestion(lower);
             }
 
-            // Check for review/summary requests
-            if (lower.includes('review') || lower.match(/what'?s (up|going|happening)/) || lower.includes('summary') ||
-                lower.includes('how many') || lower.includes('how am i doing')) {
+            // Review/summary requests
+            if (lower.includes('summary') || lower.includes('how am i doing') || lower.includes('my progress') ||
+                (lower.includes('review') && !isLikelyTask)) {
                 return generateDaySummaryResponse();
             }
 
+            // Status queries
             if (lower.includes('urgent') || lower.includes('priority') || lower.includes('important')) {
                 return generateUrgentResponse();
             }
@@ -2500,14 +2519,18 @@
                 return generateWaitingResponse();
             }
 
-            // Greetings and general chat
-            if (lower.match(/^(hi|hello|hey|good morning|good afternoon|good evening)/)) {
+            // Greetings
+            if (lower.match(/^(hi|hello|hey|good morning|good afternoon|good evening|yo|sup)(\s|$|!)/)) {
                 return generateGreetingResponse();
             }
 
-            // Questions that might need deeper AI (future: route to Claude)
-            if (lower.includes('how do i') || lower.includes('what is') || lower.includes('explain') ||
-                lower.includes('tell me about') || lower.includes('research')) {
+            // General questions that need AI (not about tasks/calendar)
+            if (isQuestion && !isLikelyTask) {
+                // Check if it's asking about their tasks/day first
+                if (lower.includes('task') || lower.includes('to do') || lower.includes('todo')) {
+                    return generateDaySummaryResponse();
+                }
+                // Otherwise it's a general knowledge question
                 return { type: 'text', content: `That's a great question! In the future, I'll be able to search and research for you. For now, you might want to ask Claude or ChatGPT about: "<em>${escapeHtml(userMessage)}</em>"` };
             }
 
@@ -2522,7 +2545,17 @@
                 return handleRoadmapCheckoffChat(userMessage);
             }
 
-            // Default: treat as task creation
+            // If it looks like a task, create it
+            if (isLikelyTask) {
+                return generateTaskCreationResponse(userMessage);
+            }
+
+            // For short ambiguous inputs, ask for clarification
+            if (lower.split(' ').length <= 3 && !isLikelyTask) {
+                return { type: 'text', content: `I'm not sure if you want me to add "${escapeHtml(userMessage)}" as a task, or if you're asking me something. Could you tell me more?` };
+            }
+
+            // Default: treat as task creation for longer action-like statements
             return generateTaskCreationResponse(userMessage);
         }
 
@@ -2550,6 +2583,63 @@
 
         function generateCalendarResponse(lower) {
             const now = new Date();
+            const dayNames = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+            const shortDayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
+            // Check if asking about the week
+            const isWeekQuery = lower.includes('week') || lower.includes('coming up') || lower.includes('ahead');
+
+            // Check for specific day of week
+            let specificDay = null;
+            for (let i = 0; i < dayNames.length; i++) {
+                if (lower.includes(dayNames[i])) {
+                    specificDay = i;
+                    break;
+                }
+            }
+
+            if (isWeekQuery) {
+                // Show the next 7 days
+                let text = `<strong>Here's your week ahead:</strong>\n\n`;
+                let hasAnything = false;
+
+                for (let i = 0; i < 7; i++) {
+                    const date = new Date(now);
+                    date.setDate(date.getDate() + i);
+                    const dateStr = formatDateISO(date);
+                    const dayLabel = i === 0 ? 'Today' : i === 1 ? 'Tomorrow' : shortDayNames[date.getDay()];
+                    const dateDisplay = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+
+                    const dayEvents = googleCalendarEvents.filter(e => {
+                        const start = e.start.dateTime || e.start.date;
+                        return start && start.startsWith(dateStr);
+                    });
+                    const dayTasks = tasks.filter(t => !t.completed && t.scheduledDate === dateStr);
+
+                    if (dayEvents.length > 0 || dayTasks.length > 0) {
+                        hasAnything = true;
+                        text += `<strong>${dayLabel} (${dateDisplay})</strong>\n`;
+
+                        dayEvents.forEach(e => {
+                            const time = e.start.dateTime ? new Date(e.start.dateTime).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }) : 'All day';
+                            text += `  📅 ${time} — ${e.summary}\n`;
+                        });
+
+                        dayTasks.forEach(t => {
+                            text += `  ✓ ${t.title}\n`;
+                        });
+                        text += '\n';
+                    }
+                }
+
+                if (!hasAnything) {
+                    text = `Your week looks pretty open! No scheduled events or tasks for the next 7 days. What would you like to focus on?`;
+                }
+
+                return { type: 'text', content: text.trim() };
+            }
+
+            // Single day query
             let targetDate = now;
             let dateLabel = 'today';
 
@@ -2557,6 +2647,15 @@
                 targetDate = new Date(now);
                 targetDate.setDate(targetDate.getDate() + 1);
                 dateLabel = 'tomorrow';
+            } else if (specificDay !== null) {
+                // Find the next occurrence of that day
+                targetDate = new Date(now);
+                const currentDay = now.getDay();
+                let daysUntil = specificDay - currentDay;
+                if (daysUntil <= 0) daysUntil += 7; // Next week if same day or past
+                if (daysUntil === 0) daysUntil = 7; // "This Monday" means next Monday if today is Monday
+                targetDate.setDate(targetDate.getDate() + daysUntil);
+                dateLabel = dayNames[specificDay].charAt(0).toUpperCase() + dayNames[specificDay].slice(1);
             }
 
             const targetStr = formatDateISO(targetDate);
